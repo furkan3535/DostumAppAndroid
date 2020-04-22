@@ -209,6 +209,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     data = getAppNameFromPackage(applicationDetailList.get(i).getApplicationName(), this) + "\t" + "ForegroundTime: "
                             + applicationDetailList.get(i).getHour() + "hours";
                     appDataArray.add(data);
+                    if(true){
+                        
+                    }
                 }
 
                 ArrayAdapter<String> appData = new ArrayAdapter<String>(this,

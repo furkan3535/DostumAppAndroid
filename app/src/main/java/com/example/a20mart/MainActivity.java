@@ -28,7 +28,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.w3c.dom.Text;
+
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -43,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     TextView soundLevelText;
     UsageStatsManager usageStatsManager;
     ArrayList<ApplicationDetail> applicationDetailList = new ArrayList<>();
-
+    TextView callInfoTextView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,8 +59,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         appDataList = findViewById(R.id.appsList);
         soundLevelText = findViewById(R.id.sndTextView);
         sound_granted = false;
-
-
+        callInfoTextView=findViewById(R.id.callingText);
         //App Usage Permission Check
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
         int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
@@ -162,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button btn = (Button) v;
 
         if (btn == usageBtn) {
-            getCallDetails();//test yapmak amaçlı konmuştur yeri değişecek ve bir buton a atanacak.
+
             if (granted) {
                 boolean contains = false; // en tepeye aliriz sonra
                 ApplicationDetail d1;
@@ -209,14 +211,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     data = getAppNameFromPackage(applicationDetailList.get(i).getApplicationName(), this) + "\t" + "ForegroundTime: "
                             + applicationDetailList.get(i).getHour() + "hours";
                     appDataArray.add(data);
-                    if(true){
-                        
-                    }
                 }
 
                 ArrayAdapter<String> appData = new ArrayAdapter<String>(this,
                         android.R.layout.simple_list_item_1, android.R.id.text1, appDataArray);
                 appDataList.setAdapter(appData);
+
+                getCallDetails();//test yapmak amaçlı konmuştur yeri değişecek ve bir buton a atanacak.
 
 
             } else {
@@ -298,20 +299,70 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    private String getCallDetails() {
+    private void getCallDetails() {
+        int NumOfPerson=0;
+        int Duration=0;
         StringBuffer stringBuffer = new StringBuffer();
-        Calendar daily= Calendar.getInstance();
+        Calendar daily = Calendar.getInstance();
         String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
-        daily.add(Calendar.DATE,-1); //from Yesterday,
-        String fromDate=String.valueOf(daily.getTimeInMillis());
+        daily.add(Calendar.DATE, -1); //from Yesterday,
+        String fromDate = String.valueOf(daily.getTimeInMillis());
         daily.setTime(new Date());
-        String toDate=String.valueOf(daily.getTimeInMillis()); //to Now.
-        String[] whereValue = {fromDate,toDate};
+        String toDate = String.valueOf(daily.getTimeInMillis()); //to Now.
+        String[] whereValue = {fromDate, toDate};
         // whereValue return 24hours with millis. Query that below collect calling data according to whereValue time period.
-        Cursor managedCursor = getContentResolver().query(CallLog.Calls.CONTENT_URI, null, android.provider.CallLog.Calls.DATE + " BETWEEN ? AND ?", whereValue,strOrder);
+        Cursor managedCursor = getContentResolver().query(CallLog.Calls.CONTENT_URI, null, android.provider.CallLog.Calls.DATE + " BETWEEN ? AND ?", whereValue, strOrder);
+
+        int number = managedCursor.getColumnIndex(CallLog.Calls.NUMBER);
+        int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
+        int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
+        int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
+
+        stringBuffer.append("Call Log :");
+        NumOfPerson=managedCursor.getCount();
+        while (managedCursor.moveToNext()) {
+            String phoneNumber = managedCursor.getString(number);
+            String callType = managedCursor.getString(type);
+            String callDate = managedCursor.getString(date);
+            SimpleDateFormat formatter = new SimpleDateFormat(
+                    "dd-MMM-yyyy HH:mm");
+            String dateString = formatter.format(new Date(Long
+                    .parseLong(callDate)));
+            //  Date callDayTime = new Date(Long.valueOf(callDate));
+            String callDuration = managedCursor.getString(duration);
+            Duration+= managedCursor.getInt(duration);
+
+            String dir = null;
+
+            int dirCode = Integer.parseInt(callType);
 
 
+            switch (dirCode) {
+                case CallLog.Calls.OUTGOING_TYPE:
+                    dir = "OUTGOING";
+                    break;
 
-        return "";
+                case CallLog.Calls.INCOMING_TYPE:
+                    dir = "INCOMMING";
+                    break;
+                case CallLog.Calls.MISSED_TYPE:
+                    dir = "MISSED CALL";
+                    break;
+
+            }
+
+            stringBuffer.append("\nPhone Number:--- " + phoneNumber + "\nCall Type:--- "
+                    + dir + "\nCall Date:---"
+                    + dateString + "\nCall Duration:---" + callDuration);
+            stringBuffer.append("\n--------------------------");
+
+        }
+
+        callInfoTextView.setText(stringBuffer);
+        callInfoTextView.setVisibility(View.VISIBLE);
+
     }
+
+
+
 }

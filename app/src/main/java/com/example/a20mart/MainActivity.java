@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         soundLevelText = findViewById(R.id.sndTextView);
         sound_granted = false;
 
+
         //App Usage Permission Check
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
         int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,

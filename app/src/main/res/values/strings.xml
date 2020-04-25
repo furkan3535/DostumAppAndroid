@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">20Mart</string>
+    <string name="error_no_sensor">No sensor</string>
+    <string name="sensor_val_format">%1$.2f</string>
+    <string name="coordinates">
+      %1$.2s %2$.2s %3$.2s
+    </string>
 </resources>

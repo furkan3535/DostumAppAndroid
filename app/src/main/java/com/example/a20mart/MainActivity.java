@@ -15,6 +15,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,9 +37,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Vector;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    private MediaRecorder mRecorder = null;
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, SensorEventListener,StepListener {
+    private MediaRecorder mRecorderSound = null;
     static final int REQUEST_CODE = 123;
     Button usageBtn, getSoundBtn;
     static boolean granted, sound_granted;
@@ -43,6 +48,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     TextView soundLevelText;
     UsageStatsManager usageStatsManager;
     ArrayList<ApplicationDetail> applicationDetailList = new ArrayList<>();
+    private MediaRecorder mRecorder = null;
+
+
+    private SensorManager mSensorManager;
+    // Individual light and proximity sensors.
+    private Sensor mSensorProximity, mSensorLight, mSensorHumidity,
+            mSensorTemparature, mSensorPressure, mSensorAccelerometer, mSensorGyroscope, mSensorGravity,mSensorStep;
+
+
+    // TextViews to display current sensor values
+   // private TextView _lightVal,_tempVal,_stepVal,_humiVal,_pressVal,_proxiVal,_noiseVal,_accVal,_gyroVal,_gravityVal;
+
+    private List<Sensor> sensors;
+
+    private Vector _currentAccelerometer, _currentGyroValue, _currentGravity;
+
+    private SimpleStepDetector simpleStepDetector;
+
+    private static final String TEXT_NUM_STEPS = "Number of Steps: ";
+    private int numSteps;
+
+    //Hardware Type Sensors
+    private SoundMeter mSensorSound;
+
+
+    private float _currentLightValue, _currentTempValue,_currentStep,
+            _currentHumidityValue, _currentPressure, _currentProximity;
+    private double _currentNoiseAmp,_currentNoiseDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,7 +132,230 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         }
 
+
+
+        _currentAccelerometer = new Vector(3);
+        _currentGyroValue = new Vector(3);
+        _currentGravity = new Vector(3);
+        mSensorSound = new SoundMeter();
+
+        mSensorManager =
+                (SensorManager) getSystemService(this.SENSOR_SERVICE);
+
+        sensors= mSensorManager.getSensorList(Sensor.TYPE_ALL);
+        listSensors();
+        doInitialize(); // all text views are matched.
+
+
+        mSensorProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+
+        mSensorLight = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+
+
+
+
+        mSensorAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+        mSensorStep=mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+
+        PackageManager pm = getPackageManager();
     }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mSensorManager.unregisterListener(this);
+        mSensorSound.stop();
+
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        int sensorType = event.sensor.getType();
+        float currentValue = event.values[0];
+
+        switch (sensorType) {
+            // Event came from the light sensor.
+
+            case Sensor.TYPE_LIGHT:
+                _currentLightValue = currentValue;
+              //  _lightVal.setText(getResources().getString(R.string.sensor_val_format,_currentLightValue));
+                break;
+            case Sensor.TYPE_PROXIMITY:
+                _currentProximity = currentValue;
+               // _proxiVal.setText(getResources().getString(R.string.sensor_val_format,_currentProximity));
+                break;
+            case Sensor.TYPE_AMBIENT_TEMPERATURE:
+                _currentTempValue = currentValue;
+              //  _tempVal.setText(getResources().getString(R.string.sensor_val_format,_currentTempValue));
+                break;
+            case Sensor.TYPE_RELATIVE_HUMIDITY:
+                _currentHumidityValue = currentValue;
+                //_humiVal.setText(getResources().getString(R.string.sensor_val_format,_currentHumidityValue));
+                break;
+            case Sensor.TYPE_PRESSURE:
+                _currentPressure = currentValue;
+              //  _pressVal.setText(getResources().getString(R.string.sensor_val_format,_currentPressure));
+                break;
+            case Sensor.TYPE_ACCELEROMETER:
+                Vector temp = new Vector(3);
+                temp.add(0, event.values[0]);
+                temp.add(1, event.values[1]);
+                temp.add(2, event.values[2]);
+                _currentAccelerometer = temp;
+             //   _accVal.setText(getResources().getString(R.string.coordinates,_currentAccelerometer.get(0),_currentAccelerometer.get(1),_currentAccelerometer.get(2)));
+                break;
+
+            case Sensor.TYPE_STEP_DETECTOR:
+                _currentStep+=1;
+             //   _stepVal.setText(""+_currentStep);
+                break;
+            default:
+                // do nothing
+        }
+
+        _currentNoiseAmp = mSensorSound.getAmplitude();
+        _currentNoiseDB=getNoiseDb();
+       // _noiseVal.setText(""+_currentNoiseDB);
+
+
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    public void listSensors(){
+        StringBuilder sensorText = new StringBuilder();
+
+        for (Sensor currentSensor : sensors ) {
+            sensorText.append(currentSensor.getName()).append(
+                    System.getProperty("line.separator"));
+        }
+        /*TextView sensorTextView =  findViewById(R.id.sensorlist);
+        sensorTextView.setText(sensorText);*/
+    }
+
+    public void doInitialize(){
+        /*
+        _lightVal = findViewById(R.id.lightValue);
+        _proxiVal = findViewById(R.id.proximityValue);
+        _humiVal  = findViewById(R.id.humidityValue);
+        _tempVal = findViewById(R.id.temperatureValue);
+        _pressVal = findViewById(R.id.pressureValue);
+        _accVal = findViewById(R.id.accelerometerValue);
+        _gyroVal = findViewById(R.id.gyroscopeValue);
+        _gravityVal = findViewById(R.id.gravityValue);
+        _stepVal = findViewById(R.id.stepValue);
+        _noiseVal = findViewById(R.id.noiseVal);
+*/
+
+    }
+
+
+    public Vector get_currentAccelerometer() {
+        return _currentAccelerometer;
+    }
+
+    public Vector get_currentGyroValue() {
+        return _currentGyroValue;
+    }
+
+    public Vector get_currentGravity() {
+        return _currentGravity;
+    }
+
+    public float get_currentLightValue() {
+        return _currentLightValue;
+    }
+
+    public float get_currentTempValue() {
+        return _currentTempValue;
+    }
+
+    public float get_currentHumidityValue() {
+        return _currentHumidityValue;
+    }
+
+    public float get_currentPressure() {
+        return _currentPressure;
+    }
+
+    public float get_currentProximity() {
+        return _currentProximity;
+    }
+
+    public double getNoiseDb() {
+        //Returns the Db level of maximum absolute amplitude that was sampled since the last call to this method.
+        if (mRecorder != null) {
+            if (_currentNoiseAmp > 0 && _currentNoiseAmp < 1000000) {
+                _currentNoiseDB = 20 * (float) (Math.log10(_currentNoiseAmp));// amplitude to db formula.
+                return _currentNoiseDB;
+            }
+
+        }
+        return 0;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+
+        if (mSensorProximity != null) {
+            mSensorManager.registerListener(this, mSensorProximity,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }/*
+        if (mSensorLight != null) {
+            mSensorManager.registerListener(this, mSensorLight,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }else{
+            //nolur buraya girme.
+        }
+        if (mSensorHumidity != null) {
+            mSensorManager.registerListener(this, mSensorHumidity,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }
+        if (mSensorTemparature != null) {
+            mSensorManager.registerListener(this, mSensorTemparature,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }
+        if (mSensorPressure != null) {
+            mSensorManager.registerListener(this, mSensorPressure,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }*/
+        if (mSensorAccelerometer != null) {
+            mSensorManager.registerListener(this, mSensorAccelerometer,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }/*
+        if (mSensorGyroscope != null) {
+            mSensorManager.registerListener(this, mSensorGyroscope,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }
+        if (mSensorGravity != null) {
+            mSensorManager.registerListener(this, mSensorGravity,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }*/
+        if (mSensorStep != null) {
+            mSensorManager.registerListener(this, mSensorStep,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
+                    0);
+            //ask request
+
+        }else{
+            //permission passed
+            mSensorSound.start();
+        }
+
+    }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -153,6 +409,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         }
+    }
+    @Override
+    public void step(long timeNs) {
+        numSteps++;
+      //  _stepVal.setText(TEXT_NUM_STEPS + numSteps);
     }
 
 
@@ -238,26 +499,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
         soundMeterHandler.postDelayed(soundMeter, 5000);
+        mSensorManager.registerListener(this, mSensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
     }
 
 
     public void startMicSetup() throws IOException {
-        if (mRecorder == null) {
-            mRecorder = new MediaRecorder();
-            mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-            mRecorder.setOutputFile("/dev/null");
-            mRecorder.prepare();
-            mRecorder.start();
+        if (mRecorderSound == null) {
+            mRecorderSound = new MediaRecorder();
+            mRecorderSound.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mRecorderSound.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            mRecorderSound.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            mRecorderSound.setOutputFile("/dev/null");
+            mRecorderSound.prepare();
+            mRecorderSound.start();
         }
     }
 
    /* public void stopMic() {
-        if (mRecorder != null) {
-            mRecorder.stop();
-            mRecorder.release();
-            mRecorder = null;
+        if (mRecorderSound != null) {
+            mRecorderSound.stop();
+            mRecorderSound.release();
+            mRecorderSound = null;
         }
     }*/
 
@@ -273,8 +536,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     public double getAmplitude() {
-        if (mRecorder != null)
-            return mRecorder.getMaxAmplitude();
+        if (mRecorderSound != null)
+            return mRecorderSound.getMaxAmplitude();
         else
             return 0;
 
@@ -313,5 +576,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         return "";
+    }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
     }
 }

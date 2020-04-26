@@ -51,25 +51,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     TextView soundLevelText;
     UsageStatsManager usageStatsManager;
     ArrayList<ApplicationDetail> applicationDetailList = new ArrayList<>();
-    TextView callInfoTextView;
+    TextView callInfoTextView,_stepVal;
     private MediaRecorder mRecorder = null;
-
+    private long numSteps;
 
     private SensorManager mSensorManager;
     // Individual light and proximity sensors.
     private Sensor mSensorProximity, mSensorLight,  mSensorAccelerometer;
-
-
-
-
-    private List<Sensor> sensors;
-
     private Vector _currentAccelerometer;
-
     private SimpleStepDetector simpleStepDetector;
-
     private static final String TEXT_NUM_STEPS = "Number of Steps: ";
-
+    private boolean micStat;
 
     //Hardware Type Sensors
 
@@ -91,6 +83,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         soundLevelText = findViewById(R.id.sndTextView);
         sound_granted = false;
         callInfoTextView=findViewById(R.id.callingText);
+        micStat=false;
+        //stepPart
+        _stepVal=findViewById(R.id.stepVal);
+        numSteps=0;
+        simpleStepDetector=new SimpleStepDetector();
+        simpleStepDetector.registerListener(this);
+        //
+
 
         //App Usage Permission Check
 
@@ -142,7 +142,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mSensorManager =
                 (SensorManager) getSystemService(this.SENSOR_SERVICE);
 
-        sensors= mSensorManager.getSensorList(Sensor.TYPE_ALL);
 
 
         mSensorProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
@@ -190,20 +189,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (sensorType) {
             // Event came from the light sensor.
 
-            case Sensor.TYPE_LIGHT:
-                _currentLightValue = currentValue;
-              //  _lightVal.setText(getResources().getString(R.string.sensor_val_format,_currentLightValue));
-                break;
-            case Sensor.TYPE_PROXIMITY:
-                _currentProximity = currentValue;
-               // _proxiVal.setText(getResources().getString(R.string.sensor_val_format,_currentProximity));
-                break;
+
             case Sensor.TYPE_ACCELEROMETER:
                 Vector temp = new Vector(3);
                 temp.add(0, event.values[0]);
                 temp.add(1, event.values[1]);
                 temp.add(2, event.values[2]);
                 _currentAccelerometer = temp;
+                simpleStepDetector.updateAccel(event.timestamp,event.values[0],event.values[1],event.values[2]);
              //   _accVal.setText(getResources().getString(R.string.coordinates,_currentAccelerometer.get(0),_currentAccelerometer.get(1),_currentAccelerometer.get(2)));
                 break;
 
@@ -240,24 +233,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return _currentProximity;
     }
 
-    public double getNoiseDb() {
-        //Returns the Db level of maximum absolute amplitude that was sampled since the last call to this method.
-        if (mRecorder != null) {
-            if (_currentNoiseAmp > 0 && _currentNoiseAmp < 1000000) {
-                _currentNoiseDB = 20 * (float) (Math.log10(_currentNoiseAmp));// amplitude to db formula.
-                return _currentNoiseDB;
-            }
 
-        }
-        return 0;
-    }
 
 
     @Override
 
     protected void onResume() {
         super.onResume();
-        soundMeterHandler.postDelayed(soundMeter, 5000);
+        if(micStat) soundMeterHandler.postDelayed(soundMeter, 5000);
         mSensorManager.registerListener(this, mSensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
     }
@@ -326,7 +309,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button btn = (Button) v;
 
         if (btn == usageBtn) {
-
+            getCallDetails();//test yapmak amaçlı konmuştur yeri değişecek ve bir buton a atanacak.
             if (granted) {
                 boolean contains = false; // en tepeye aliriz sonra
                 ApplicationDetail d1;
@@ -379,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         android.R.layout.simple_list_item_1, android.R.id.text1, appDataArray);
                 appDataList.setAdapter(appData);
 
-                getCallDetails();//test yapmak amaçlı konmuştur yeri değişecek ve bir buton a atanacak.
+
 
 
             } else {
@@ -408,11 +391,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mRecorderSound.setOutputFile("/dev/null");
             mRecorderSound.prepare();
             mRecorderSound.start();
+            micStat=true;
+
         }
     }
 
    /* public void stopMic() {
         if (mRecorderSound != null) {
+            micStat=false;
             mRecorderSound.stop();
             mRecorderSound.release();
             mRecorderSound = null;
@@ -424,7 +410,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Runnable soundMeter = new Runnable() {
         @Override
         public void run() {
-            soundLevelText.setText("Sound Level is : " + getAmplitude());
+            soundLevelText.setText("Sound Level is : " + getNoiseDb());
             soundMeterHandler.postDelayed(soundMeter, 500);
         }
     };
@@ -436,6 +422,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         else
             return 0;
 
+    }
+
+    public double getNoiseDb() {
+        //Returns the Db level of maximum absolute amplitude that was sampled since the last call to this method.
+        _currentNoiseAmp=mRecorderSound.getMaxAmplitude();
+        if (mRecorderSound != null) {
+            if (_currentNoiseAmp > 0 && _currentNoiseAmp < 1000000) {
+                _currentNoiseDB = (int)(20 * (float) (Math.log10(_currentNoiseAmp)));// amplitude to db formula.
+                return _currentNoiseDB;
+            }
+
+        }
+        return 0;
     }
 
 
@@ -528,6 +527,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void step(long timeNs) {
-
+        numSteps++;
+        _stepVal.setText(TEXT_NUM_STEPS + numSteps);
     }
 }

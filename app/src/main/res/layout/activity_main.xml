@@ -48,6 +48,12 @@
                 android:text="sadsadadasdasdas" />
 
             <TextView
+                android:id="@+id/stepVal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Steps" />
+
+            <TextView
                 android:id="@+id/callingText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

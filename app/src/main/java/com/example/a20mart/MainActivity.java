@@ -32,7 +32,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
+
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -57,28 +57,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private SensorManager mSensorManager;
     // Individual light and proximity sensors.
-    private Sensor mSensorProximity, mSensorLight, mSensorHumidity,
-            mSensorTemparature, mSensorPressure, mSensorAccelerometer, mSensorGyroscope, mSensorGravity,mSensorStep;
+    private Sensor mSensorProximity, mSensorLight,  mSensorAccelerometer;
 
 
-    // TextViews to display current sensor values
-   // private TextView _lightVal,_tempVal,_stepVal,_humiVal,_pressVal,_proxiVal,_noiseVal,_accVal,_gyroVal,_gravityVal;
+
 
     private List<Sensor> sensors;
 
-    private Vector _currentAccelerometer, _currentGyroValue, _currentGravity;
+    private Vector _currentAccelerometer;
 
     private SimpleStepDetector simpleStepDetector;
 
     private static final String TEXT_NUM_STEPS = "Number of Steps: ";
-    private int numSteps;
+
 
     //Hardware Type Sensors
-    private SoundMeter mSensorSound;
 
 
-    private float _currentLightValue, _currentTempValue,_currentStep,
-            _currentHumidityValue, _currentPressure, _currentProximity;
+
+    private float _currentLightValue, _currentProximity;
     private double _currentNoiseAmp,_currentNoiseDB;
 
     @Override
@@ -94,7 +91,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         soundLevelText = findViewById(R.id.sndTextView);
         sound_granted = false;
         callInfoTextView=findViewById(R.id.callingText);
+
         //App Usage Permission Check
+
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
         int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
                 android.os.Process.myUid(), getPackageName());
@@ -138,28 +137,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         _currentAccelerometer = new Vector(3);
-        _currentGyroValue = new Vector(3);
-        _currentGravity = new Vector(3);
-        mSensorSound = new SoundMeter();
+
 
         mSensorManager =
                 (SensorManager) getSystemService(this.SENSOR_SERVICE);
 
         sensors= mSensorManager.getSensorList(Sensor.TYPE_ALL);
-        listSensors();
-        doInitialize(); // all text views are matched.
 
 
         mSensorProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
 
         mSensorLight = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
-
-
-
         mSensorAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
-        mSensorStep=mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+
+
+        if (mSensorProximity != null) {
+            mSensorManager.registerListener(this, mSensorProximity,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }
+        if (mSensorLight != null) {
+            mSensorManager.registerListener(this, mSensorLight,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }
+
+
+        if (mSensorAccelerometer != null) {
+            mSensorManager.registerListener(this, mSensorAccelerometer,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }
+
+
+
 
         PackageManager pm = getPackageManager();
     }
@@ -168,7 +178,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onStop() {
         super.onStop();
         mSensorManager.unregisterListener(this);
-        mSensorSound.stop();
+
 
     }
 
@@ -188,18 +198,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 _currentProximity = currentValue;
                // _proxiVal.setText(getResources().getString(R.string.sensor_val_format,_currentProximity));
                 break;
-            case Sensor.TYPE_AMBIENT_TEMPERATURE:
-                _currentTempValue = currentValue;
-              //  _tempVal.setText(getResources().getString(R.string.sensor_val_format,_currentTempValue));
-                break;
-            case Sensor.TYPE_RELATIVE_HUMIDITY:
-                _currentHumidityValue = currentValue;
-                //_humiVal.setText(getResources().getString(R.string.sensor_val_format,_currentHumidityValue));
-                break;
-            case Sensor.TYPE_PRESSURE:
-                _currentPressure = currentValue;
-              //  _pressVal.setText(getResources().getString(R.string.sensor_val_format,_currentPressure));
-                break;
             case Sensor.TYPE_ACCELEROMETER:
                 Vector temp = new Vector(3);
                 temp.add(0, event.values[0]);
@@ -209,17 +207,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
              //   _accVal.setText(getResources().getString(R.string.coordinates,_currentAccelerometer.get(0),_currentAccelerometer.get(1),_currentAccelerometer.get(2)));
                 break;
 
-            case Sensor.TYPE_STEP_DETECTOR:
-                _currentStep+=1;
-             //   _stepVal.setText(""+_currentStep);
-                break;
+
             default:
                 // do nothing
         }
 
-        _currentNoiseAmp = mSensorSound.getAmplitude();
-        _currentNoiseDB=getNoiseDb();
-       // _noiseVal.setText(""+_currentNoiseDB);
+
+
+
 
 
     }
@@ -229,60 +224,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    public void listSensors(){
-        StringBuilder sensorText = new StringBuilder();
 
-        for (Sensor currentSensor : sensors ) {
-            sensorText.append(currentSensor.getName()).append(
-                    System.getProperty("line.separator"));
-        }
-        /*TextView sensorTextView =  findViewById(R.id.sensorlist);
-        sensorTextView.setText(sensorText);*/
-    }
 
-    public void doInitialize(){
-        /*
-        _lightVal = findViewById(R.id.lightValue);
-        _proxiVal = findViewById(R.id.proximityValue);
-        _humiVal  = findViewById(R.id.humidityValue);
-        _tempVal = findViewById(R.id.temperatureValue);
-        _pressVal = findViewById(R.id.pressureValue);
-        _accVal = findViewById(R.id.accelerometerValue);
-        _gyroVal = findViewById(R.id.gyroscopeValue);
-        _gravityVal = findViewById(R.id.gravityValue);
-        _stepVal = findViewById(R.id.stepValue);
-        _noiseVal = findViewById(R.id.noiseVal);
-*/
-
-    }
 
 
     public Vector get_currentAccelerometer() {
         return _currentAccelerometer;
     }
 
-    public Vector get_currentGyroValue() {
-        return _currentGyroValue;
-    }
-
-    public Vector get_currentGravity() {
-        return _currentGravity;
-    }
-
     public float get_currentLightValue() {
         return _currentLightValue;
-    }
-
-    public float get_currentTempValue() {
-        return _currentTempValue;
-    }
-
-    public float get_currentHumidityValue() {
-        return _currentHumidityValue;
-    }
-
-    public float get_currentPressure() {
-        return _currentPressure;
     }
 
     public float get_currentProximity() {
@@ -301,63 +252,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return 0;
     }
 
+
     @Override
-    protected void onStart() {
-        super.onStart();
 
-
-        if (mSensorProximity != null) {
-            mSensorManager.registerListener(this, mSensorProximity,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }/*
-        if (mSensorLight != null) {
-            mSensorManager.registerListener(this, mSensorLight,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }else{
-            //nolur buraya girme.
-        }
-        if (mSensorHumidity != null) {
-            mSensorManager.registerListener(this, mSensorHumidity,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }
-        if (mSensorTemparature != null) {
-            mSensorManager.registerListener(this, mSensorTemparature,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }
-        if (mSensorPressure != null) {
-            mSensorManager.registerListener(this, mSensorPressure,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }*/
-        if (mSensorAccelerometer != null) {
-            mSensorManager.registerListener(this, mSensorAccelerometer,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }/*
-        if (mSensorGyroscope != null) {
-            mSensorManager.registerListener(this, mSensorGyroscope,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }
-        if (mSensorGravity != null) {
-            mSensorManager.registerListener(this, mSensorGravity,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }*/
-        if (mSensorStep != null) {
-            mSensorManager.registerListener(this, mSensorStep,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-            // Permission is not granted
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
-                    0);
-            //ask request
-
-        }else{
-            //permission passed
-            mSensorSound.start();
-        }
+    protected void onResume() {
+        super.onResume();
+        soundMeterHandler.postDelayed(soundMeter, 5000);
+        mSensorManager.registerListener(this, mSensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
     }
+
 
 
     @Override
@@ -413,11 +317,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         }
     }
-    @Override
-    public void step(long timeNs) {
-        numSteps++;
-      //  _stepVal.setText(TEXT_NUM_STEPS + numSteps);
-    }
+
 
 
     @Override
@@ -496,14 +396,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    @Override
 
-    protected void onResume() {
-        super.onResume();
-        soundMeterHandler.postDelayed(soundMeter, 5000);
-        mSensorManager.registerListener(this, mSensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-
-    }
 
 
     public void startMicSetup() throws IOException {
@@ -630,6 +523,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
+
+    }
+
+    @Override
+    public void step(long timeNs) {
 
     }
 }

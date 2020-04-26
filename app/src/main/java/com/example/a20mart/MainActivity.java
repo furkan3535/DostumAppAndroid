@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SimpleStepDetector simpleStepDetector;
     private static final String TEXT_NUM_STEPS = "Number of Steps: ";
     private boolean micStat;
-
+    private CallingInfo _callingInfo;
     //Hardware Type Sensors
 
 
@@ -473,47 +473,75 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
         int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
         int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
-
-        stringBuffer.append("Call Log :");
+        _callingInfo = new CallingInfo();
+        stringBuffer.append("CALL LOG\n\n");
         NumOfPerson=managedCursor.getCount();
         while (managedCursor.moveToNext()) {
             String phoneNumber = managedCursor.getString(number);
-            String callType = managedCursor.getString(type);
+            int callType = managedCursor.getInt(type);
             String callDate = managedCursor.getString(date);
             SimpleDateFormat formatter = new SimpleDateFormat(
                     "dd-MMM-yyyy HH:mm");
             String dateString = formatter.format(new Date(Long
                     .parseLong(callDate)));
             //  Date callDayTime = new Date(Long.valueOf(callDate));
-            String callDuration = managedCursor.getString(duration);
+            int callDuration = managedCursor.getInt(duration);
             Duration+= managedCursor.getInt(duration);
 
-            String dir = null;
 
-            int dirCode = Integer.parseInt(callType);
+            _callingInfo.addCall(phoneNumber,callDuration,callType);
 
 
-            switch (dirCode) {
-                case CallLog.Calls.OUTGOING_TYPE:
-                    dir = "OUTGOING";
-                    break;
 
-                case CallLog.Calls.INCOMING_TYPE:
-                    dir = "INCOMMING";
-                    break;
-                case CallLog.Calls.MISSED_TYPE:
-                    dir = "MISSED CALL";
-                    break;
-
-            }
-
-            stringBuffer.append("\nPhone Number:--- " + phoneNumber + "\nCall Type:--- "
+          /*  stringBuffer.append("\nPhone Number:--- " + phoneNumber + "\nCall Type:--- "
                     + dir + "\nCall Date:---"
                     + dateString + "\nCall Duration:---" + callDuration);
-            stringBuffer.append("\n--------------------------");
+            stringBuffer.append("\n--------------------------");*/
 
         }
+        stringBuffer.append("\nTotal Call Duration: "+_callingInfo.getTotalDuration()+
+                "sn.\nTotal Call Count: "+_callingInfo.getTotalCallCount()+
+                "\nTotal Called Person: "+_callingInfo.getTotalCalledPerson()+
+                "\nAverage Call Time: "+_callingInfo.getAverageCallTime()+
+                "sn.\nMaximum Call Time: "+_callingInfo.getMaximumCallTime()+"sn.\n");
+        for (Caller caller:_callingInfo.getCallers()) {
+            stringBuffer.append("-----------------\nCaller "+(_callingInfo.getCallers().indexOf(caller)+1 )+"\nTotal Call Duration: "+caller.getTotalDuration()+
+                    "sn.\nTotal Call Count: "+caller.getTotalCallCount()+
+                    "\nAverage Call Time: "+caller.getAverageCallTime()+
+                    "sn.\nMaximum Call Time: "+caller.getMaximumCallTime()+"sn.\n\n");
+            for (Call call:caller.getCalls()) {
+                String dir = null;
+                switch (call.getCallType()) {
+                    case CallLog.Calls.OUTGOING_TYPE:
+                        dir = "Outgoing";
+                        break;
 
+                    case CallLog.Calls.INCOMING_TYPE:
+                        dir = "Incoming";
+                        break;
+                    case CallLog.Calls.MISSED_TYPE:
+                        dir = "Missed Call";
+                        break;
+                    case CallLog.Calls.VOICEMAIL_TYPE:
+                        dir = "Voicemail";
+                        break;
+                    case CallLog.Calls.REJECTED_TYPE:
+                        dir = "Rejected";
+                        break;
+                    case CallLog.Calls.BLOCKED_TYPE:
+                        dir = "Blocked";
+                        break;
+
+
+
+                }
+
+                stringBuffer.append("Call Duration: "+call.getCallTime()+"sn\n"
+                +"Call Type: "+dir+"\n");
+            }
+
+        }
+        stringBuffer.append("\n\n");
         callInfoTextView.setText(stringBuffer);
         callInfoTextView.setVisibility(View.VISIBLE);
 

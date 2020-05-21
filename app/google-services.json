@@ -1,0 +1,130 @@
+{
+  "project_info": {
+    "project_number": "855738182482",
+    "firebase_url": "https://dostum-b9130.firebaseio.com",
+    "project_id": "dostum-b9130",
+    "storage_bucket": "dostum-b9130.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855738182482:android:4a81cd051a25fbed",
+        "android_client_info": {
+          "package_name": "com.dostum.dostum"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "855738182482-n7n7it81ngiteabe8uk63i6ifne20f5m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dostum.dostum",
+            "certificate_hash": "9c5f069c8297890d5dce15cb11bae4fb989b5ffb"
+          }
+        },
+        {
+          "client_id": "855738182482-j52742bj6hn22fbhduha514fn57d5utd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dostum.dostum",
+            "certificate_hash": "a58f626a309f88808fad86e99f5ef66972dd27a0"
+          }
+        },
+        {
+          "client_id": "855738182482-iv5necmng6ej0mkpge7btu5kk5t0nau1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMFar_mFxuQa4DO-gGNBMPaEwj-2oq_BI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "855738182482-iv5necmng6ej0mkpge7btu5kk5t0nau1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855738182482:android:1ad2c2e69a25a50a",
+        "android_client_info": {
+          "package_name": "com.dostum.dostum.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "855738182482-kj60spn1fr7900o3g06omf7q7kcekdl3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dostum.dostum.debug",
+            "certificate_hash": "a58f626a309f88808fad86e99f5ef66972dd27a0"
+          }
+        },
+        {
+          "client_id": "855738182482-iv5necmng6ej0mkpge7btu5kk5t0nau1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMFar_mFxuQa4DO-gGNBMPaEwj-2oq_BI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "855738182482-iv5necmng6ej0mkpge7btu5kk5t0nau1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855738182482:android:f3f106214a8b435ad1288b",
+        "android_client_info": {
+          "package_name": "com.example.a20mart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "855738182482-oij7jgpc8cinmudcf6ce15u18qgrtpbp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.a20mart",
+            "certificate_hash": "9f54414811168a2616de14679be06d134aa8c945"
+          }
+        },
+        {
+          "client_id": "855738182482-iv5necmng6ej0mkpge7btu5kk5t0nau1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMFar_mFxuQa4DO-gGNBMPaEwj-2oq_BI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "855738182482-iv5necmng6ej0mkpge7btu5kk5t0nau1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

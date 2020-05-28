@@ -22,6 +22,8 @@ public class LoginScreen extends AppCompatActivity {
     EditText emailET,passwordET;
     Button signInWithEmail;
     private FirebaseAuth mAuth;
+    private static final String TAG = "FB Login";
+
 
     private void intentToMain(){
         startActivity(new Intent(this,MainActivity.class));
@@ -47,7 +49,7 @@ public class LoginScreen extends AppCompatActivity {
                     .addOnCompleteListener( new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
-                            String TAG = "FB Login";
+
                             if (task.isSuccessful()) {
                                 // Sign in success, update UI with the signed-in user's information
                                 Log.d(TAG, "signInWithEmail:success");

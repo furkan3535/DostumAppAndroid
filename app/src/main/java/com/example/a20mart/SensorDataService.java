@@ -140,7 +140,18 @@ public class SensorDataService extends Service implements SensorEventListener,St
 
     }
 
+    public double getNoiseDb() {
+        //  Log.i(TAG, "getNoiseDb: is called");
+        //Returns the Db level of maximum absolute amplitude that was sampled since the last call to this method.
 
+        int _currentNoiseDB = (int) ((Math.log10(mRecorderSound.getMaxAmplitude())) * 20);// amplitude to db formula.
+        //Log.i(TAG, "getNoiseDb return val DB: "+ _currentNoiseDB);
+        return _currentNoiseDB;
+
+
+
+
+    }
 
     @Nullable
     @Override

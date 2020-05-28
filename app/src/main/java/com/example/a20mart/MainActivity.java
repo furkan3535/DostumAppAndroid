@@ -6,9 +6,14 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.AlarmManager;
 import android.app.AppOpsManager;
+import android.app.PendingIntent;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,9 +27,11 @@ import android.hardware.SensorManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Process;
 import android.provider.CallLog;
 import android.provider.Settings;
 
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -33,6 +40,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -43,6 +52,7 @@ import java.util.List;
 import java.util.Vector;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, SensorEventListener,StepListener {
+    private static final String TAG = "MainActivity";
     private MediaRecorder mRecorderSound = null;
     static final int REQUEST_CODE = 123;
     Button usageBtn, getSoundBtn;
@@ -65,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private CallingInfo _callingInfo;
     //Hardware Type Sensors
 
+    private FirebaseAuth mAuth;
 
 
     private float _currentLightValue, _currentProximity;
@@ -73,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mAuth = FirebaseAuth.getInstance();
         setContentView(R.layout.activity_main);
         usageBtn = findViewById(R.id.usageBtn);
         getSoundBtn = findViewById(R.id.soundCheckBtn);
@@ -90,13 +102,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         simpleStepDetector=new SimpleStepDetector();
         simpleStepDetector.registerListener(this);
         //
-
-
+        AlarmManager scheduler = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         //App Usage Permission Check
+        Calendar alarmCalendar=Calendar.getInstance();
 
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
         int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(), getPackageName());
+                Process.myUid(), getPackageName());
 
         if (mode == AppOpsManager.MODE_DEFAULT) {
             granted = (checkCallingOrSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED);
@@ -106,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //App Usage Permission Check
 
 
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CALL_LOG) +
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) +
                 +ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CALL_LOG)
                 != PackageManager.PERMISSION_GRANTED) {
             //when permissions not granted.
@@ -134,22 +146,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         }
 
-
-
         _currentAccelerometer = new Vector(3);
-
 
         mSensorManager =
                 (SensorManager) getSystemService(this.SENSOR_SERVICE);
-
-
 
         mSensorProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
 
         mSensorLight = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
         mSensorAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
 
 
         if (mSensorProximity != null) {
@@ -168,15 +174,52 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
 
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) +
+                +ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CALL_LOG)
+                == PackageManager.PERMISSION_GRANTED ) {
 
+                //Intent serviceIntent=new Intent(this,SensorJobIntentService.class);
+                //SensorJobIntentService.enqueueWork(this,serviceIntent);
+
+
+
+
+            /* Log.i(TAG, "onStartJobScheduler");
+            ComponentName componentName =new ComponentName(this,SensorLoggerJobService.class);
+            JobInfo jobInfo =new JobInfo.Builder(321,componentName).setOverrideDeadline(0)
+                    .build();
+            JobScheduler jobScheduler=(JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+            int resultCode=jobScheduler.schedule(jobInfo);
+            if(resultCode == JobScheduler.RESULT_SUCCESS){
+                Log.i(TAG, "Job Scheduled Successfully");
+            }
+            else{
+                Log.i(TAG, "Job Scheduled not Successfully");
+            }
+
+
+            */
+            //scheduler.cancel(scheduledIntent);
+
+            // Check if user is signed in (non-null) and update UI accordingly.
+
+        }
 
         PackageManager pm = getPackageManager();
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+
+    }
+
+
+
+    @Override
     protected void onStop() {
         super.onStop();
-        mSensorManager.unregisterListener(this);
+
 
 
     }
@@ -492,11 +535,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             _callingInfo.addCall(phoneNumber,callDuration,callType);
 
 
-
-          /*  stringBuffer.append("\nPhone Number:--- " + phoneNumber + "\nCall Type:--- "
-                    + dir + "\nCall Date:---"
-                    + dateString + "\nCall Duration:---" + callDuration);
-            stringBuffer.append("\n--------------------------");*/
 
         }
         stringBuffer.append("\nTotal Call Duration: "+_callingInfo.getTotalDuration()+

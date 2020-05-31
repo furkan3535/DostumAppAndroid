@@ -7,6 +7,8 @@ import android.os.Build;
 
 public class App extends Application {
     private static final String CHANNEL_ID="exampleServiceChannel";
+    private static final String CALLDATA_CHANNEL_ID="firebaseCalldataServiceChannel";
+
 
     @Override
     public void onCreate() {
@@ -25,6 +27,13 @@ public class App extends Application {
             );
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(serviceChannel);
+            NotificationChannel serviceChannel2 = new NotificationChannel(
+                    CALLDATA_CHANNEL_ID,
+                    "firebaseCalldataServiceChannel",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            NotificationManager manager2 = getSystemService(NotificationManager.class);
+            manager2.createNotificationChannel(serviceChannel2);
         }
     }
 }

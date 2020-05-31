@@ -1,18 +1,10 @@
 package com.example.a20mart;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -21,12 +13,10 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
-import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.os.Process;
 import android.provider.CallLog;
 import android.provider.Settings;
-
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -35,22 +25,32 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     static final int REQUEST_CODE = 123;
-    Button usageBtn, StartServiceBtn;
+    Button usageBtn, StartServiceBtn,firestoreAddButton;
     static boolean granted;
     ListView appDataList;
     TextView soundLevelText;
@@ -82,8 +82,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         usageBtn = findViewById(R.id.usageBtn);
         my_db=new SQLiteAccessHelper(this);
         usageBtn.setOnClickListener(this);
-
-
+        firestoreAddButton = findViewById(R.id.firestoreAddButton);
+        currentUser = mAuth.getCurrentUser();
+        firestoreAddButton.setOnClickListener(firestoreAddButtonPressed);
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         appDataList = findViewById(R.id.appsList);
         callInfoTextView=findViewById(R.id.callingText);
@@ -133,9 +134,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         PackageManager pm = getPackageManager();
     }
+    View.OnClickListener firestoreAddButtonPressed  = new  View.OnClickListener(){
+        @Override
+        public void onClick(View v) {
+            Map<String, Object> user = new HashMap<>();
+            CallingInfo info = getCallDetails();
+            user.put("UserId", currentUser.getUid());
+            user.put("Date", Calendar.getInstance().getTime());
+            user.put("AverageCallTime", info.getAverageCallTime());
+            user.put("MaximumCallTime", info.getMaximumCallTime());
+            user.put("TotalCallCount", info.getTotalCallCount());
+            user.put("TotalCalledPerson", info.getTotalCalledPerson());
+            user.put("TotalDuration", info.getTotalDuration());
+            user.put("Callers", info.getCallers());
 
 
+            db.collection("CallData")
+                    .add(user)
+                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                        @Override
+                        public void onSuccess(DocumentReference documentReference) {
+                            Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.w(TAG, "Error adding document", e);
+                        }
+                    });
+        }
+    };
 
+
+    public void StartCallLogService(View view) {
+        Intent serviceIntent = new Intent(this, CallDataFBService.class);
+        ContextCompat.startForegroundService(this, serviceIntent);
+
+    }
 
 
 
@@ -346,7 +382,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    private void getCallDetails() {
+    private CallingInfo getCallDetails() {
         int NumOfPerson=0;
         int Duration=0;
         StringBuffer stringBuffer = new StringBuffer();
@@ -430,7 +466,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         stringBuffer.append("\n\n");
         callInfoTextView.setText(stringBuffer);
         callInfoTextView.setVisibility(View.VISIBLE);
-
+        return _callingInfo;
     }
 
 

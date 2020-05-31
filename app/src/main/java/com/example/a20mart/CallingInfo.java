@@ -64,6 +64,12 @@ public class CallingInfo {
     }
 
     public List<Caller> getCallers() {
-        return callers;
+        int index = 1;
+        List<Caller> listToReturn = callers;
+        for (Caller caller:listToReturn) {
+            caller.setCallerNumber(Integer.toString(index));
+            index++;
+        }
+        return listToReturn;
     }
 }

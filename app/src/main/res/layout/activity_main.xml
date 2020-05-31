@@ -23,6 +23,19 @@
                 android:layout_marginTop="64dp" >
 
             </ListView>
+            <Button
+                android:id="@+id/firestoreAddButton"
+                android:layout_width="375dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="32dp"
+                android:background="@drawable/gradient"
+                android:radius="10dp"
+                android:text="Firestore Add"
+                android:textColor="@color/common_google_signin_btn_text_dark_default"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.444"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/signInWithEmailBtn" />
 
             <Button
                 android:id="@+id/usageBtn"
@@ -40,6 +53,14 @@
                 android:layout_marginTop="68dp"
                 android:onClick="StartService"
                 android:text="StartBGService" />
+            <Button
+                android:id="@+id/StartCallLogService"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="84dp"
+                android:layout_marginTop="68dp"
+                android:onClick="StartCallLogService"
+                android:text="StartCallLogService" />
 
             <Button
                 android:id="@+id/StopService"

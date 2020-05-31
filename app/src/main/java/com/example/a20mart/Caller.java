@@ -49,6 +49,8 @@ public class Caller {
         return maximumCallTime;
     }
 
+    public void setCallerNumber(String _CallerNumber){this.callerNumber = _CallerNumber;}
+
     public List<Call> getCalls() {
         return calls;
     }

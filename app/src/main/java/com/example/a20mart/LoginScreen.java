@@ -44,7 +44,10 @@ public class LoginScreen extends AppCompatActivity {
 
         JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
         ComponentName componentName=new ComponentName(this,CallDataFBService.class);
-        JobInfo jobInfo=new JobInfo.Builder(321,componentName)
+        JobInfo jobInfo;
+
+
+        jobInfo = new JobInfo.Builder(952,componentName)
                 .setPersisted(true) //job will be written to disk and loaded at boot.
                 .setPeriodic(15*60*1000) //Periodicity
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY) //Requires Any Network To Run.
@@ -66,10 +69,10 @@ public class LoginScreen extends AppCompatActivity {
         emailET = findViewById( R.id.emailET);
         passwordET = findViewById( R.id.passwordET);
         signInWithEmail = findViewById(R.id.signInWithEmailBtn);
-        firestoreAddButton = findViewById(R.id.firestoreAddButton);
+        //firestoreAddButton = findViewById(R.id.firestoreAddButton);
         mAuth = FirebaseAuth.getInstance();
         signInWithEmail.setOnClickListener(signInWithEmailPressed);
-        firestoreAddButton.setOnClickListener(firestoreAddButtonPressed);
+        //firestoreAddButton.setOnClickListener(firestoreAddButtonPressed);
         db = FirebaseFirestore.getInstance();
         CallDataFB();
 
@@ -104,7 +107,8 @@ public class LoginScreen extends AppCompatActivity {
     View.OnClickListener signInWithEmailPressed = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            mAuth.signInWithEmailAndPassword(emailET.getText().toString(), passwordET.getText().toString())
+            //mAuth.signInWithEmailAndPassword(emailET.getText().toString(), passwordET.getText().toString())
+            mAuth.signInWithEmailAndPassword("furkan@gmail.com","1234qwer")
                     .addOnCompleteListener( new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {

@@ -74,7 +74,7 @@ public class LoginScreen extends AppCompatActivity {
         signInWithEmail.setOnClickListener(signInWithEmailPressed);
         //firestoreAddButton.setOnClickListener(firestoreAddButtonPressed);
         db = FirebaseFirestore.getInstance();
-        CallDataFB();
+        //CallDataFB();
 
     }
 

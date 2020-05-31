@@ -53,14 +53,7 @@
                 android:layout_marginTop="68dp"
                 android:onClick="StartService"
                 android:text="StartBGService" />
-            <Button
-                android:id="@+id/StartCallLogService"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="84dp"
-                android:layout_marginTop="68dp"
-                android:onClick="StartCallLogService"
-                android:text="StartCallLogService" />
+
 
             <Button
                 android:id="@+id/StopService"

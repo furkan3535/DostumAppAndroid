@@ -8,7 +8,6 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
-import android.app.PendingIntent;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.app.usage.UsageStats;
@@ -21,12 +20,9 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.media.MediaRecorder;
+import android.net.NetworkRequest;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Process;
 import android.provider.CallLog;
 import android.provider.Settings;
@@ -42,8 +38,8 @@ import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -51,60 +47,50 @@ import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, SensorEventListener,StepListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
-    private MediaRecorder mRecorderSound = null;
     static final int REQUEST_CODE = 123;
-    Button usageBtn, getSoundBtn;
-    static boolean granted, sound_granted;
+    Button usageBtn, StartServiceBtn;
+    static boolean granted;
     ListView appDataList;
     TextView soundLevelText;
     UsageStatsManager usageStatsManager;
     ArrayList<ApplicationDetail> applicationDetailList = new ArrayList<>();
     TextView callInfoTextView,_stepVal;
-    private MediaRecorder mRecorder = null;
-    private long numSteps;
+
+
 
     private SensorManager mSensorManager;
-    // Individual light and proximity sensors.
-    private Sensor mSensorProximity, mSensorLight,  mSensorAccelerometer;
+    private Sensor mSensorProximity, mSensorLight;
     private Vector _currentAccelerometer;
-    private SimpleStepDetector simpleStepDetector;
-    private static final String TEXT_NUM_STEPS = "Number of Steps: ";
-    private boolean micStat;
     private CallingInfo _callingInfo;
-    //Hardware Type Sensors
-
     private FirebaseAuth mAuth;
+    public static FirebaseUser currentUser;
+    public static FirebaseFirestore db;
+    private static SQLiteAccessHelper my_db;
+
 
 
     private float _currentLightValue, _currentProximity;
-    private double _currentNoiseAmp,_currentNoiseDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
         setContentView(R.layout.activity_main);
         usageBtn = findViewById(R.id.usageBtn);
-        getSoundBtn = findViewById(R.id.soundCheckBtn);
+        my_db=new SQLiteAccessHelper(this);
         usageBtn.setOnClickListener(this);
-        getSoundBtn.setOnClickListener(this);
+
+
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         appDataList = findViewById(R.id.appsList);
-        soundLevelText = findViewById(R.id.sndTextView);
-        sound_granted = false;
         callInfoTextView=findViewById(R.id.callingText);
-        micStat=false;
-        //stepPart
-        _stepVal=findViewById(R.id.stepVal);
-        numSteps=0;
-        simpleStepDetector=new SimpleStepDetector();
-        simpleStepDetector.registerListener(this);
-        //
         AlarmManager scheduler = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         //App Usage Permission Check
         Calendar alarmCalendar=Calendar.getInstance();
+
 
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
         int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
@@ -135,82 +121,51 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
 
             //When permissions are already granted.
-            sound_granted = true;
-            try {
-                startMicSetup();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+
             Toast.makeText(getApplicationContext(), "All Permissions Already Granted", Toast.LENGTH_SHORT).show();
 
 
         }
 
-        _currentAccelerometer = new Vector(3);
-
-        mSensorManager =
-                (SensorManager) getSystemService(this.SENSOR_SERVICE);
-
-        mSensorProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-
-        mSensorLight = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-
-        mSensorAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-
-        if (mSensorProximity != null) {
-            mSensorManager.registerListener(this, mSensorProximity,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }
-        if (mSensorLight != null) {
-            mSensorManager.registerListener(this, mSensorLight,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }
-
-
-        if (mSensorAccelerometer != null) {
-            mSensorManager.registerListener(this, mSensorAccelerometer,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }
-
-
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) +
-                +ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CALL_LOG)
-                == PackageManager.PERMISSION_GRANTED ) {
-
-                //Intent serviceIntent=new Intent(this,SensorJobIntentService.class);
-                //SensorJobIntentService.enqueueWork(this,serviceIntent);
 
 
 
-
-            /* Log.i(TAG, "onStartJobScheduler");
-            ComponentName componentName =new ComponentName(this,SensorLoggerJobService.class);
-            JobInfo jobInfo =new JobInfo.Builder(321,componentName).setOverrideDeadline(0)
-                    .build();
-            JobScheduler jobScheduler=(JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
-            int resultCode=jobScheduler.schedule(jobInfo);
-            if(resultCode == JobScheduler.RESULT_SUCCESS){
-                Log.i(TAG, "Job Scheduled Successfully");
-            }
-            else{
-                Log.i(TAG, "Job Scheduled not Successfully");
-            }
-
-
-            */
-            //scheduler.cancel(scheduledIntent);
-
-            // Check if user is signed in (non-null) and update UI accordingly.
-
-        }
 
         PackageManager pm = getPackageManager();
     }
 
+
+
+
+
+
+
+
+    public void StartService(View view) {
+        Intent serviceIntent = new Intent(this, SensorDataService.class);
+        ContextCompat.startForegroundService(this, serviceIntent);
+
+    }
+
+    public void StopService(View view) {
+        Intent serviceIntent=new Intent(this,SensorDataService.class);
+        stopService(serviceIntent);
+        finish();
+
+    }
+
+
+
+
+
     @Override
     public void onStart() {
         super.onStart();
+
+
+
+
+
 
     }
 
@@ -224,57 +179,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        int sensorType = event.sensor.getType();
-        float currentValue = event.values[0];
-
-        switch (sensorType) {
-            // Event came from the light sensor.
 
 
-            case Sensor.TYPE_ACCELEROMETER:
-                Vector temp = new Vector(3);
-                temp.add(0, event.values[0]);
-                temp.add(1, event.values[1]);
-                temp.add(2, event.values[2]);
-                _currentAccelerometer = temp;
-                simpleStepDetector.updateAccel(event.timestamp,event.values[0],event.values[1],event.values[2]);
-             //   _accVal.setText(getResources().getString(R.string.coordinates,_currentAccelerometer.get(0),_currentAccelerometer.get(1),_currentAccelerometer.get(2)));
-                break;
-
-
-            default:
-                // do nothing
-        }
-
-
-
-
-
-
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
-
-
-
-
-
-    public Vector get_currentAccelerometer() {
-        return _currentAccelerometer;
-    }
-
-    public float get_currentLightValue() {
-        return _currentLightValue;
-    }
-
-    public float get_currentProximity() {
-        return _currentProximity;
-    }
 
 
 
@@ -283,8 +189,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     protected void onResume() {
         super.onResume();
-        if(micStat) soundMeterHandler.postDelayed(soundMeter, 5000);
-        mSensorManager.registerListener(this, mSensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
     }
 
@@ -350,6 +254,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
 
         Button btn = (Button) v;
+
 
         if (btn == usageBtn) {
             getCallDetails();//test yapmak amaçlı konmuştur yeri değişecek ve bir buton a atanacak.
@@ -422,63 +327,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-
-
-
-    public void startMicSetup() throws IOException {
-        if (mRecorderSound == null) {
-            mRecorderSound = new MediaRecorder();
-            mRecorderSound.setAudioSource(MediaRecorder.AudioSource.MIC);
-            mRecorderSound.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-            mRecorderSound.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-            mRecorderSound.setOutputFile("/dev/null");
-            mRecorderSound.prepare();
-            mRecorderSound.start();
-            micStat=true;
-
-        }
-    }
-
-   /* public void stopMic() {
-        if (mRecorderSound != null) {
-            micStat=false;
-            mRecorderSound.stop();
-            mRecorderSound.release();
-            mRecorderSound = null;
-        }
-    }*/
-
-    Handler soundMeterHandler = new Handler();
-
-    Runnable soundMeter = new Runnable() {
-        @Override
-        public void run() {
-            soundLevelText.setText("Sound Level is : " + getNoiseDb());
-            soundMeterHandler.postDelayed(soundMeter, 500);
-        }
-    };
-
-
-    public double getAmplitude() {
-        if (mRecorderSound != null)
-            return mRecorderSound.getMaxAmplitude();
-        else
-            return 0;
-
-    }
-
-    public double getNoiseDb() {
-        //Returns the Db level of maximum absolute amplitude that was sampled since the last call to this method.
-        _currentNoiseAmp=mRecorderSound.getMaxAmplitude();
-        if (mRecorderSound != null) {
-            if (_currentNoiseAmp > 0 && _currentNoiseAmp < 1000000) {
-                _currentNoiseDB = (int)(20 * (float) (Math.log10(_currentNoiseAmp)));// amplitude to db formula.
-                return _currentNoiseDB;
-            }
-
-        }
-        return 0;
-    }
 
 
     private String getAppNameFromPackage(String packageName, Context context) {
@@ -591,9 +439,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    @Override
-    public void step(long timeNs) {
-        numSteps++;
-        _stepVal.setText(TEXT_NUM_STEPS + numSteps);
-    }
+
+
 }

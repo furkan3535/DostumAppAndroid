@@ -33,25 +33,22 @@
                 android:text="Button" />
 
             <Button
-                android:id="@+id/soundCheckBtn"
+                android:id="@+id/StartBackgroundService"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="84dp"
                 android:layout_marginTop="68dp"
-                android:text="CheckSoundLevel" />
+                android:onClick="StartService"
+                android:text="StartBGService" />
 
-            <TextView
-                android:id="@+id/sndTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="80dp"
-                android:text="sadsadadasdasdas" />
-
-            <TextView
-                android:id="@+id/stepVal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Steps" />
+            <Button
+                android:id="@+id/StopService"
+                android:layout_width="203dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="84dp"
+                android:layout_marginTop="68dp"
+                android:onClick="StopService"
+                android:text="StopService" />
 
             <TextView
                 android:id="@+id/callingText"

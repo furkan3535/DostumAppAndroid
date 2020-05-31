@@ -3,6 +3,9 @@ package com.example.a20mart;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -15,6 +18,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.util.Calendar;
@@ -23,23 +27,24 @@ import java.util.TimerTask;
 import java.util.Vector;
 
 public class SensorDataService extends Service implements SensorEventListener,StepListener {
-
     private static final String TAG="Background Service";
-    private MediaRecorder mRecorderSound;
     private static final String CHANNEL_ID = "exampleServiceChannel";
-    private String notifData;
+    public static final String Step_Key="Step_Record";
+    public static final String Sound_Key="Sound_Record";
     private int RecordVal;
+    private long numSteps;
     private Timer task;
-    private int dataBaseFlag=0;
     private SQLiteAccessHelper my_db;
+    private MediaRecorder mRecorderSound;
     private SimpleStepDetector simpleStepDetector;
     private Notification notification;
     private SensorManager mSensorManager;
     private Sensor mSensorAccelerometer;
-    private long numSteps;
     private Intent notificationIntent;
     private PendingIntent pendingIntent;
     private NotificationManagerCompat notificationManagerCompat;
+    private JobScheduler jobScheduler;
+    private boolean jobFlag=false;
 
 
     @Override
@@ -54,14 +59,15 @@ public class SensorDataService extends Service implements SensorEventListener,St
         mSensorAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mSensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         notificationManagerCompat=NotificationManagerCompat.from(this);
+        numSteps=my_db.getLastData(this,Step_Key); //this function returns 0 if db empty.
 
-        // Log.i(TAG, "onStartCommand is called.  ");
-        notifData = "" + 0;
-        // Log.i(TAG, "notifData: " + notifData);
+
+
+
 
         notificationIntent = new Intent(this, MainActivity.class);
         pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        notification = new NotificationCompat.Builder(this, CHANNEL_ID).setContentTitle(notifData)
+        notification = new NotificationCompat.Builder(this, CHANNEL_ID).setContentTitle(""+(int)numSteps)
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setContentIntent(pendingIntent).build();
 
@@ -71,31 +77,28 @@ public class SensorDataService extends Service implements SensorEventListener,St
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
+        numSteps=my_db.getLastData(this,Step_Key);
         startForeground(1, notification);
 
-        /*task.scheduleAtFixedRate(new TimerTask() {
+        task.scheduleAtFixedRate(new TimerTask() {
 
             @Override
             public void run() { //bunu durdurmam gerekiyor.
-                if (dataBaseFlag < 1) {
+
                     try {
                         startMicSetup();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                     RecordVal = 0;
-                    int RecordVal2 = 0;
-                    //Calendar.getInstance().getTime()
                     for (int i = 0; i < 6; i++) {
                         if (i != 0) {
                             try {
-                                Thread.sleep(5000);
+                                Thread.sleep(3000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                             RecordVal += (int) getNoiseDb();
-                            // Log.d(TAG, "Sound Level " + RecordVal);
 
                         }
                         if (i == 0) {
@@ -103,19 +106,21 @@ public class SensorDataService extends Service implements SensorEventListener,St
                         }
                     }
                     RecordVal = RecordVal / 5;
-                    Log.d(TAG, "Final Average RecordVal after For Loop : " + RecordVal);
+
                     mRecorderSound.stop();
                     mRecorderSound.reset();
-                    dataBaseFlag++;
 
-                }
-                else{
-                    //my_db.insertSoundRecords(1, Calendar.getInstance().getTime().toString(),RecordVal);
-                    //task.cancel();
-                }
+                    //Data insertion to SQLite DB
+                    my_db.insertDataSQL( Calendar.getInstance().getTime().toString(),Sound_Key,RecordVal);
+                    my_db.insertDataSQL(Calendar.getInstance().getTime().toString(),Step_Key,(int)numSteps);
+                    if(my_db.getCount()==6){
+                        SendData();
+                    }
+
+                    Log.d(TAG, "All Data is saved into SQL : " + RecordVal + "Step  "+(int)numSteps);
             }
 
-        },0, 10*60*1000); // 10min*/
+        },0, 30*1000); // 10min
 
 
 
@@ -141,16 +146,9 @@ public class SensorDataService extends Service implements SensorEventListener,St
     }
 
     public double getNoiseDb() {
-        //  Log.i(TAG, "getNoiseDb: is called");
         //Returns the Db level of maximum absolute amplitude that was sampled since the last call to this method.
-
         int _currentNoiseDB = (int) ((Math.log10(mRecorderSound.getMaxAmplitude())) * 20);// amplitude to db formula.
-        //Log.i(TAG, "getNoiseDb return val DB: "+ _currentNoiseDB);
         return _currentNoiseDB;
-
-
-
-
     }
 
     @Nullable
@@ -172,11 +170,6 @@ public class SensorDataService extends Service implements SensorEventListener,St
         int sensorType = event.sensor.getType();
         switch (sensorType) {
             case Sensor.TYPE_ACCELEROMETER:
-                //Log.d(TAG, "onSensorChanged--->: TYPE_ACCELEROMETER");
-                Vector temp = new Vector(3);
-                temp.add(0, event.values[0]);
-                temp.add(1, event.values[1]);
-                temp.add(2, event.values[2]);
                 simpleStepDetector.updateAccel(event.timestamp,event.values[0],event.values[1],event.values[2]);
                 break;
             default:
@@ -189,6 +182,27 @@ public class SensorDataService extends Service implements SensorEventListener,St
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
+
+    public void SendData(){
+
+        jobScheduler=(JobScheduler)getSystemService(JOB_SCHEDULER_SERVICE);
+        ComponentName componentName=new ComponentName(this,DataTransmitService.class);
+        JobInfo jobInfo=new JobInfo.Builder(321,componentName)
+                .setPersisted(true) //job will be written to disk and loaded at boot.
+                .setPeriodic(15*60*1000) //Periodicity
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY) //Requires Any Network To Run.
+                .build();
+
+        int resultCode=jobScheduler.schedule(jobInfo);
+        if(resultCode == JobScheduler.RESULT_SUCCESS){
+            Log.i(TAG, "Job Scheduled Successfully");
+        }
+        else{
+            Log.i(TAG, "Job Scheduled not Successfully");
+        }
+    }
+
+
 
     @Override
     public void step(long timeNs) {

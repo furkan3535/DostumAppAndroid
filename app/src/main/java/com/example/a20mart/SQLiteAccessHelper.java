@@ -2,22 +2,25 @@ package com.example.a20mart;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import android.widget.Toast;
 
 public class SQLiteAccessHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME="UserInfo.db";
-    private static final String TABLE_NAME="SoundRecords";
-    private static final String USER_ID="USER_ID";
+    private static final String TABLE_NAME="UserRecords";
     private static final String Record_Time="Record_Time";
-    private static final String Noise_Level="Noise_Level";
+    private static final String Def_Key="Def_Key";
+    private static final String Record_Value="Record_Value";
     private static final String TAG="SQL SERVER";
 
     @Override
     public void onCreate(SQLiteDatabase db) {
         Log.i(TAG, "onCreate: is called");
-        String create_table_sql= "CREATE TABLE '" + TABLE_NAME +"' (USER_ID INT PRIMARY KEY,Record_Time TEXT, Noise_Level INT) ;";
+        String create_table_sql= "CREATE TABLE '" + TABLE_NAME +"' (Record_Time TEXT,Def_Key TEXT NOT NULL, Record_Value INT) ;";
         db.execSQL(create_table_sql);
     }
 
@@ -33,13 +36,42 @@ public class SQLiteAccessHelper extends SQLiteOpenHelper {
             //db.execSQL("drop table if exists TABLE_NAME");
     }
 
-    public void insertSoundRecords(int User_Id,String Rc_Time,int N_Level){
+    public void insertDataSQL(String Rc_Time,String Definition_Key,int Rec_Value){
         SQLiteDatabase db= this.getWritableDatabase();
         ContentValues val= new ContentValues();
-        val.put(USER_ID,User_Id);
         val.put(Record_Time,Rc_Time);
-        val.put(Noise_Level,N_Level);
+        val.put(Def_Key,Definition_Key);
+        val.put(Record_Value,Rec_Value);
        long isSuccess= db.insert(TABLE_NAME,null,val); //the row ID of the newly inserted row, or -1 if an error occurred
-        if(isSuccess!=-1)Log.i(TAG, "InsertSoundRecord is successfully !");
+        if(isSuccess!=-1)Log.i(TAG, "SQL insertion is successfully !");
+    }
+
+    public int getCount(){
+        SQLiteDatabase db= this.getWritableDatabase();
+        long count = DatabaseUtils.queryNumEntries(db, TABLE_NAME);
+        Log.i(TAG, "getCount-->: " + count);
+        return (int)count;
+    }
+
+    public int getLastData(Context context,String Key){
+        SQLiteDatabase db= this.getWritableDatabase();
+        Cursor cursor=db.rawQuery("select * from UserRecords",null);
+
+        if(cursor.getCount()==0){
+            Toast.makeText(context,"NO DATA",Toast.LENGTH_LONG).show();
+            return 0;
+        }
+        else{
+            for (cursor.moveToLast(); !cursor.isFirst(); cursor.moveToPrevious()) {
+                if(cursor.getString(1).equals(Key)){
+                    Log.d(TAG, "Cursor Last Data  Type: " + cursor.getString(1)+" Value : "+cursor.getString(2));
+                    return cursor.getInt(2);
+                }
+
+            }
+        }
+
+
+        return 0;
     }
 }

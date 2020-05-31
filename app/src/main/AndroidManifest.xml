@@ -32,6 +32,9 @@
         <service
             android:name=".DataTransmitService"
             android:permission="android.permission.BIND_JOB_SERVICE"/>
+        <service
+            android:name=".CallDataFBService"
+            android:permission="android.permission.BIND_JOB_SERVICE"/>
     </application>
 
 </manifest>

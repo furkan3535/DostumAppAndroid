@@ -1,5 +1,8 @@
 package com.example.a20mart;
 
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,6 +40,24 @@ public class LoginScreen extends AppCompatActivity {
     private void intentToMain(){
         startActivity(new Intent(this,MainActivity.class));
     }
+    public void CallDataFB(){
+
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+        ComponentName componentName=new ComponentName(this,CallDataFBService.class);
+        JobInfo jobInfo=new JobInfo.Builder(321,componentName)
+                .setPersisted(true) //job will be written to disk and loaded at boot.
+                .setPeriodic(15*60*1000) //Periodicity
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY) //Requires Any Network To Run.
+                .build();
+
+        int resultCode=jobScheduler.schedule(jobInfo);
+        if(resultCode == JobScheduler.RESULT_SUCCESS){
+            Log.i(TAG, "Job Scheduled Successfully");
+        }
+        else{
+            Log.i(TAG, "Job Scheduled not Successfully");
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +71,7 @@ public class LoginScreen extends AppCompatActivity {
         signInWithEmail.setOnClickListener(signInWithEmailPressed);
         firestoreAddButton.setOnClickListener(firestoreAddButtonPressed);
         db = FirebaseFirestore.getInstance();
-
+        CallDataFB();
 
     }
 

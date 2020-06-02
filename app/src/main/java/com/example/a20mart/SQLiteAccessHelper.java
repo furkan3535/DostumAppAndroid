@@ -6,8 +6,11 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.hardware.Sensor;
 import android.util.Log;
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 public class SQLiteAccessHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME="UserInfo.db";
@@ -16,6 +19,8 @@ public class SQLiteAccessHelper extends SQLiteOpenHelper {
     private static final String Def_Key="Def_Key";
     private static final String Record_Value="Record_Value";
     private static final String TAG="SQL SERVER";
+    private SensorData S_data;
+    private ArrayList<SensorData> all_data;
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -74,4 +79,26 @@ public class SQLiteAccessHelper extends SQLiteOpenHelper {
 
         return 0;
     }
+
+    public ArrayList<SensorData> getDataList(Context context, String Key){
+        SQLiteDatabase db= this.getWritableDatabase();
+        all_data=new ArrayList<>();
+        Cursor cursor=db.rawQuery("select * from UserRecords",null);
+        if(cursor.getCount()==0){
+            Toast.makeText(context,"NO DATA",Toast.LENGTH_LONG).show();
+            return null;
+        }
+        else{
+            for (cursor.moveToLast(); !cursor.isFirst(); cursor.moveToPrevious()) {
+                if(cursor.getString(1).equals(Key)){
+                    S_data=new SensorData(cursor.getString(0),cursor.getString(1),cursor.getInt(2));
+                    all_data.add(S_data);
+                }
+
+            }
+            return all_data;
+        }
+
+    }
+
 }

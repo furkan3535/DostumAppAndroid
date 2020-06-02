@@ -28,7 +28,7 @@ import java.util.Map;
 public class LoginScreen extends AppCompatActivity {
 
     EditText emailET,passwordET;
-    Button signInWithEmail,firestoreAddButton;
+    Button signInWithEmail,RegisterBtn;
     private FirebaseAuth mAuth;
     public static FirebaseUser currentUser;
     public static FirebaseFirestore db;
@@ -36,6 +36,9 @@ public class LoginScreen extends AppCompatActivity {
 
     private void intentToMain(){
         startActivity(new Intent(this,MainActivity.class));
+    }
+    private void intentToRegister(){
+        startActivity(new Intent(this,Register.class));
     }
 
     @Override
@@ -45,45 +48,40 @@ public class LoginScreen extends AppCompatActivity {
         emailET = findViewById( R.id.emailET);
         passwordET = findViewById( R.id.passwordET);
         signInWithEmail = findViewById(R.id.signInWithEmailBtn);
-        firestoreAddButton = findViewById(R.id.firestoreAddButton);
+        RegisterBtn = findViewById(R.id.RegisterButton);
         mAuth = FirebaseAuth.getInstance();
         signInWithEmail.setOnClickListener(signInWithEmailPressed);
-        firestoreAddButton.setOnClickListener(firestoreAddButtonPressed);
+        RegisterBtn.setOnClickListener(registerButtonPressed);
         db = FirebaseFirestore.getInstance();
+        currentUser=mAuth.getCurrentUser();
 
 
     }
 
 
-    View.OnClickListener firestoreAddButtonPressed  = new  View.OnClickListener(){
+    View.OnClickListener registerButtonPressed  = new  View.OnClickListener(){
         @Override
         public void onClick(View v) {
-            Map<String, Object> user = new HashMap<>();
-            user.put("UserId", currentUser.getUid());
-            user.put("Date", Calendar.getInstance().getTime());
-
-
-            db.collection("CallData")
-                    .add(user)
-                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                        @Override
-                        public void onSuccess(DocumentReference documentReference) {
-                            Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.w(TAG, "Error adding document", e);
-                        }
-                    });
+            intentToRegister();
         }
     };
 
     View.OnClickListener signInWithEmailPressed = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            mAuth.signInWithEmailAndPassword(emailET.getText().toString(), passwordET.getText().toString())
+
+            //ekrem1@gmail.com UID = bKcM1RjC3iaNLnvrjSW8EzS65u12
+            Map<String,String> loginVal=new HashMap<>();
+            loginVal.put("User Id",currentUser.getUid());
+            db.collection("NewUsers").document("Ekrem").set(loginVal);
+
+
+
+
+
+
+
+            mAuth.signInWithEmailAndPassword("ekrem1@gmail.com", "123456")
                     .addOnCompleteListener( new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {

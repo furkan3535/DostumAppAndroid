@@ -52,6 +52,7 @@ public class SensorDataService extends Service implements SensorEventListener,St
         super.onCreate();
         my_db=new SQLiteAccessHelper(this);
         task = new Timer();
+        jobFlag=false;
         mRecorderSound = new MediaRecorder();
         simpleStepDetector=new SimpleStepDetector();
         simpleStepDetector.registerListener(this);
@@ -94,7 +95,7 @@ public class SensorDataService extends Service implements SensorEventListener,St
                     for (int i = 0; i < 6; i++) {
                         if (i != 0) {
                             try {
-                                Thread.sleep(3000);
+                                Thread.sleep(2000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -113,14 +114,15 @@ public class SensorDataService extends Service implements SensorEventListener,St
                     //Data insertion to SQLite DB
                     my_db.insertDataSQL( Calendar.getInstance().getTime().toString(),Sound_Key,RecordVal);
                     my_db.insertDataSQL(Calendar.getInstance().getTime().toString(),Step_Key,(int)numSteps);
-                    if(my_db.getCount()==6){
+                    if(my_db.getCount()>=2 && !jobFlag){
                         SendData();
+                        jobFlag=true;
                     }
 
                     Log.d(TAG, "All Data is saved into SQL : " + RecordVal + "Step  "+(int)numSteps);
             }
 
-        },0, 30*1000); // 10min
+        },0, 6*60*1000); // 10min
 
 
 

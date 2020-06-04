@@ -1,5 +1,8 @@
 package com.example.a20mart;
 
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,7 +31,7 @@ import java.util.Map;
 public class LoginScreen extends AppCompatActivity {
 
     EditText emailET,passwordET;
-    Button signInWithEmail,RegisterBtn;
+    Button signInWithEmail,firestoreAddButton;
     private FirebaseAuth mAuth;
     public static FirebaseUser currentUser;
     public static FirebaseFirestore db;
@@ -37,8 +40,26 @@ public class LoginScreen extends AppCompatActivity {
     private void intentToMain(){
         startActivity(new Intent(this,MainActivity.class));
     }
-    private void intentToRegister(){
-        startActivity(new Intent(this,Register.class));
+    public void CallDataFB(){
+
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+        ComponentName componentName=new ComponentName(this,CallDataFBService.class);
+        JobInfo jobInfo;
+
+
+        jobInfo = new JobInfo.Builder(952,componentName)
+                .setPersisted(true) //job will be written to disk and loaded at boot.
+                .setPeriodic(15*60*1000) //Periodicity
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY) //Requires Any Network To Run.
+                .build();
+
+        int resultCode=jobScheduler.schedule(jobInfo);
+        if(resultCode == JobScheduler.RESULT_SUCCESS){
+            Log.i(TAG, "Job Scheduled Successfully");
+        }
+        else{
+            Log.i(TAG, "Job Scheduled not Successfully");
+        }
     }
 
     @Override
@@ -48,40 +69,46 @@ public class LoginScreen extends AppCompatActivity {
         emailET = findViewById( R.id.emailET);
         passwordET = findViewById( R.id.passwordET);
         signInWithEmail = findViewById(R.id.signInWithEmailBtn);
-        RegisterBtn = findViewById(R.id.RegisterButton);
+        //firestoreAddButton = findViewById(R.id.firestoreAddButton);
         mAuth = FirebaseAuth.getInstance();
         signInWithEmail.setOnClickListener(signInWithEmailPressed);
-        RegisterBtn.setOnClickListener(registerButtonPressed);
+        //firestoreAddButton.setOnClickListener(firestoreAddButtonPressed);
         db = FirebaseFirestore.getInstance();
-        currentUser=mAuth.getCurrentUser();
-
+        //CallDataFB();
 
     }
 
 
-    View.OnClickListener registerButtonPressed  = new  View.OnClickListener(){
+    View.OnClickListener firestoreAddButtonPressed  = new  View.OnClickListener(){
         @Override
         public void onClick(View v) {
-            intentToRegister();
+            Map<String, Object> user = new HashMap<>();
+            user.put("UserId", currentUser.getUid());
+            user.put("Date", Calendar.getInstance().getTime());
+
+
+            db.collection("CallData")
+                    .add(user)
+                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                        @Override
+                        public void onSuccess(DocumentReference documentReference) {
+                            Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.w(TAG, "Error adding document", e);
+                        }
+                    });
         }
     };
 
     View.OnClickListener signInWithEmailPressed = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-
-            //ekrem1@gmail.com UID = bKcM1RjC3iaNLnvrjSW8EzS65u12
-            Map<String,String> loginVal=new HashMap<>();
-            loginVal.put("User Id",currentUser.getUid());
-            db.collection("NewUsers").document("Ekrem").set(loginVal);
-
-
-
-
-
-
-
-            mAuth.signInWithEmailAndPassword("ekrem1@gmail.com", "123456")
+            //mAuth.signInWithEmailAndPassword(emailET.getText().toString(), passwordET.getText().toString())
+            mAuth.signInWithEmailAndPassword("furkan@gmail.com","1234qwer")
                     .addOnCompleteListener( new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {

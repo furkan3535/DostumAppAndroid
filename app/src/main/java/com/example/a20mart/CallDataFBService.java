@@ -1,12 +1,16 @@
 package com.example.a20mart;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
+import android.content.Intent;
 import android.database.Cursor;
 import android.provider.CallLog;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -21,59 +25,42 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DataTransmitService extends JobService {
+public class CallDataFBService extends JobService {
+
+    private static final String TAG = "CallDataFB";
     private FirebaseAuth mAuth;
     public static FirebaseUser currentUser;
+    private static final String CHANNEL_ID = "firebaseCalldataServiceChannel";
     public static FirebaseFirestore db;
-    private SQLiteAccessHelper my_db;
-    private static final String TAG="DataTransmitService";
-    private String Sensor_Keys[]={SensorDataService.Step_Key,SensorDataService.Sound_Key}; //HARD CODING
+    private Notification notification;
+    private Intent notificationIntent;
+    private PendingIntent pendingIntent;
+
+
     @Override
     public void onCreate() {
-        Log.i(TAG, "onCreate: ");
         super.onCreate();
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
-        currentUser = mAuth.getCurrentUser();
-        my_db=new SQLiteAccessHelper(this);
+        Log.i("FirebaseLog","onCreate Start");
+
+        notificationIntent = new Intent(this, MainActivity.class);
+        pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        notification = new NotificationCompat.Builder(this, CHANNEL_ID).setContentTitle("firebaseCalldataServiceChannel")
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setContentIntent(pendingIntent).build();
+        startForeground(5, notification);
+
 
     }
 
     @Override
     public boolean onStartJob(JobParameters params) {
-        Log.i(TAG, "onStartJob: is started");
-        TransmitSensorDataToFireBase(params);
+        Log.i("FirebaseLog","onStartJob Start");
+
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+        currentUser = mAuth.getCurrentUser();
         getCallDetails();
         return false;
-    }
-
-    private void TransmitSensorDataToFireBase(JobParameters params){
-        Log.i(TAG, "TransmitSensorDataToFireBase: is started");
-        Map<String, Object> SensorData;
-        for(int i=0;i<Sensor_Keys.length;i++) {
-            SensorData = new HashMap<>();
-            SensorData.put("UserId", currentUser.getUid());
-            SensorData.put("Date", Calendar.getInstance().getTime());
-            SensorData.put("Record_Def", Sensor_Keys[i]);
-            SensorData.put("Record_Val",my_db.getLastData(this,Sensor_Keys[i]) );
-
-            Log.i(TAG, "SensorData Type: "+SensorData.get("Record_Def")+" Value :"+SensorData.get("Record_Val"));
-            db.collection("SensorData")
-                    .add(SensorData)
-                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                        @Override
-                        public void onSuccess(DocumentReference documentReference) {
-                            Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.w(TAG, "Error adding document", e);
-                        }
-                    });
-        }
-
     }
 
 
@@ -178,7 +165,7 @@ public class DataTransmitService extends JobService {
         user.put("TotalCalledPerson", info.getTotalCalledPerson());
         user.put("TotalDuration", info.getTotalDuration());
         user.put("Callers", info.getCallers());
-        Log.i("FirebaseLog","sentToFirebase Start");
+    Log.i("FirebaseLog","sentToFirebase Start");
 
         db.collection("CallData")
                 .add(user)
@@ -195,6 +182,8 @@ public class DataTransmitService extends JobService {
                     }
                 });
     }
+
+
 
     @Override
     public boolean onStopJob(JobParameters params) {

@@ -1,18 +1,10 @@
 package com.example.a20mart;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -21,41 +13,50 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
-import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.os.Process;
 import android.provider.CallLog;
 import android.provider.Settings;
-
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     static final int REQUEST_CODE = 123;
-    Button usageBtn, StartServiceBtn;
+    Button usageBtn, StartServiceBtn,firestoreAddButton;
     static boolean granted;
     ListView appDataList;
     TextView soundLevelText;
     UsageStatsManager usageStatsManager;
-    ArrayList<ApplicationDetail> applicationDetailList = new ArrayList<>();
+    //ArrayList<ApplicationDetail> applicationDetailList = new ArrayList<>();
     TextView callInfoTextView,_stepVal;
 
 
@@ -82,14 +83,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         usageBtn = findViewById(R.id.usageBtn);
         my_db=new SQLiteAccessHelper(this);
         usageBtn.setOnClickListener(this);
-
-
+        firestoreAddButton = findViewById(R.id.firestoreAddButton);
+        currentUser = mAuth.getCurrentUser();
+        firestoreAddButton.setOnClickListener(firestoreAddButtonPressed);
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         appDataList = findViewById(R.id.appsList);
         callInfoTextView=findViewById(R.id.callingText);
         AlarmManager scheduler = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         //App Usage Permission Check
         Calendar alarmCalendar=Calendar.getInstance();
+        usageBtn.setOnClickListener(applicationUsageClicked);
 
 
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
@@ -133,9 +136,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         PackageManager pm = getPackageManager();
     }
+    View.OnClickListener firestoreAddButtonPressed  = new  View.OnClickListener(){
+        @Override
+        public void onClick(View v) {
+            Map<String, Object> user = new HashMap<>();
+            CallingInfo info = getCallDetails();
+            user.put("UserId", currentUser.getUid());
+            user.put("Date", Calendar.getInstance().getTime());
+            user.put("AverageCallTime", info.getAverageCallTime());
+            user.put("MaximumCallTime", info.getMaximumCallTime());
+            user.put("TotalCallCount", info.getTotalCallCount());
+            user.put("TotalCalledPerson", info.getTotalCalledPerson());
+            user.put("TotalDuration", info.getTotalDuration());
+            user.put("Callers", info.getCallers());
 
 
+            db.collection("CallData")
+                    .add(user)
+                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                        @Override
+                        public void onSuccess(DocumentReference documentReference) {
+                            Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.w(TAG, "Error adding document", e);
+                        }
+                    });
+        }
+    };
 
+
+    public void StartCallLogService(View view) {
+        Intent serviceIntent = new Intent(this, CallDataFBService.class);
+        ContextCompat.startForegroundService(this, serviceIntent);
+
+    }
 
 
 
@@ -248,58 +286,80 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    View.OnClickListener applicationUsageClicked = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            List<ApplicationDetail> appList = getApplicationUsage();
+            Map<String, Object> user = new HashMap<>();
+            user.put("UserId", currentUser.getUid());
+            user.put("Date", Calendar.getInstance().getTime());
+            user.put("AppList", appList);
 
 
-    @Override
-    public void onClick(View v) {
-
-        Button btn = (Button) v;
-
-
-        if (btn == usageBtn) {
-            getCallDetails();//test yapmak amaçlı konmuştur yeri değişecek ve bir buton a atanacak.
-            if (granted) {
-                boolean contains = false; // en tepeye aliriz sonra
-                ApplicationDetail d1;
-                Toast.makeText(getApplicationContext(), "Usage Permission Already Granted", Toast.LENGTH_SHORT).show();
-                //show statistics
-                final long currentTime = System.currentTimeMillis(); // Get current time in milliseconds
-
-                final Calendar cal = Calendar.getInstance();
-                cal.add(Calendar.YEAR, -1);//Set year to beginning of desired period.
-                final long beginTime = cal.getTimeInMillis();//Get begin time in milliseconds
-
-                final List<UsageStats> queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_YEARLY, beginTime, currentTime);
-                String data = "";
-                ArrayList<String> appDataArray = new ArrayList<>();
-
-                for (UsageStats u : queryUsageStats) {
-                    contains = false;
-                    if (getAppNameFromPackage(u.getPackageName(), this) != null) {
-                        // if true this is an application that is downloaded from appstore etc.
-                        d1 = new ApplicationDetail(u.getPackageName(), u.getTotalTimeInForeground());
-                        if (applicationDetailList.size() < 1) {
-                            applicationDetailList.add(d1);
-                            contains = true;
-                        } else {
-                            for (int i = 0; i < applicationDetailList.size(); i++) {
-                                if (applicationDetailList.get(i).getApplicationName().equals(d1.getApplicationName())) {
-                                    applicationDetailList.get(i).setApplicationUsageTime(d1.getApplicationUsageTime());
-                                    contains = true;
-                                    break;
-                                }
-                            }
-
+            db.collection("ApplicationUsage")
+                    .add(user)
+                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                        @Override
+                        public void onSuccess(DocumentReference documentReference) {
+                            Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
                         }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.w(TAG, "Error adding document", e);
+                        }
+                    });
 
+        }
+    };
 
-                        if (!contains) {
-                            applicationDetailList.add(d1);
+    public List<ApplicationDetail> getApplicationUsage(){
+        ArrayList<ApplicationDetail> applicationDetailList = new ArrayList<>();
+        if (granted) {
+            boolean contains = false; // en tepeye aliriz sonra
+            ApplicationDetail d1;
+            Toast.makeText(getApplicationContext(), "Usage Permission Already Granted", Toast.LENGTH_SHORT).show();
+            //show statistics
+            final long currentTime = System.currentTimeMillis(); // Get current time in milliseconds
 
+            final Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DAY_OF_YEAR, -1);//Set year to beginning of desired period.
+            final long beginTime = cal.getTimeInMillis();//Get begin time in milliseconds
+
+            final List<UsageStats> queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, beginTime, currentTime);
+
+            for (UsageStats u : queryUsageStats) {
+                contains = false;
+                if (getAppNameFromPackage(u.getPackageName(), this) != null) {
+                    // if true this is an application that is downloaded from appstore etc.
+                    d1 = new ApplicationDetail(u.getPackageName(), u.getTotalTimeInForeground());
+                    if (applicationDetailList.size() < 1) {
+                        applicationDetailList.add(d1);
+                        contains = true;
+                    } else {
+                        for (int i = 0; i < applicationDetailList.size(); i++) {
+                            if (applicationDetailList.get(i).getApplicationName().equals(d1.getApplicationName())) {
+                                applicationDetailList.get(i).setApplicationUsageTime(d1.getApplicationUsageTime());
+                                contains = true;
+                                break;
+                            }
                         }
                     }
+                    if (!contains) {
+                        applicationDetailList.add(d1);
 
+                    }
                 }
+
+            }
+            Collections.sort(applicationDetailList, new Comparator<ApplicationDetail>() {
+                @Override
+                public int compare(ApplicationDetail o1, ApplicationDetail o2) {
+                    return (int) (o2.getHour() - o1.getHour());
+                }
+            });
+/*
                 for (int i = 0; i < applicationDetailList.size(); i++) {
                     data = getAppNameFromPackage(applicationDetailList.get(i).getApplicationName(), this) + "\t" + "ForegroundTime: "
                             + applicationDetailList.get(i).getHour() + "hours";
@@ -308,17 +368,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 ArrayAdapter<String> appData = new ArrayAdapter<String>(this,
                         android.R.layout.simple_list_item_1, android.R.id.text1, appDataArray);
-                appDataList.setAdapter(appData);
+                appDataList.setAdapter(appData);*/
 
+        } else {
+            Toast.makeText(getApplicationContext(),
+                    "Please allow data usage to see related data.", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
 
+        }
+        return  applicationDetailList;
+    }
 
+    @Override
+    public void onClick(View v) {
 
-            } else {
-                Toast.makeText(getApplicationContext(),
-                        "Please allow data usage to see related data.", Toast.LENGTH_LONG).show();
-                startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+        Button btn = (Button) v;
 
-            }
+        if (btn == usageBtn) {
+
 
 
         }
@@ -346,7 +413,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    private void getCallDetails() {
+    private CallingInfo getCallDetails() {
         int NumOfPerson=0;
         int Duration=0;
         StringBuffer stringBuffer = new StringBuffer();
@@ -430,7 +497,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         stringBuffer.append("\n\n");
         callInfoTextView.setText(stringBuffer);
         callInfoTextView.setVisibility(View.VISIBLE);
-
+        return _callingInfo;
     }
 
 

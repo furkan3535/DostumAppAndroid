@@ -31,14 +31,17 @@ import java.util.Map;
 public class LoginScreen extends AppCompatActivity {
 
     EditText emailET,passwordET;
-    Button signInWithEmail,firestoreAddButton;
+    Button signInWithEmail,firestoreAddButton,registerBtn;
     private FirebaseAuth mAuth;
     public static FirebaseUser currentUser;
     public static FirebaseFirestore db;
     private static final String TAG = "FB Login";
 
     private void intentToMain(){
-        startActivity(new Intent(this,MainActivity.class));
+        startActivity(new Intent(this,OnboardingActivity.class));
+    }
+    private void intentToRegister(){
+        startActivity(new Intent(this,Register.class));
     }
     public void CallDataFB(){
 
@@ -74,6 +77,14 @@ public class LoginScreen extends AppCompatActivity {
         signInWithEmail.setOnClickListener(signInWithEmailPressed);
         //firestoreAddButton.setOnClickListener(firestoreAddButtonPressed);
         db = FirebaseFirestore.getInstance();
+        registerBtn  = findViewById(R.id.registerBtn);
+        registerBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                intentToRegister();
+            }
+        });
+
         //CallDataFB();
 
     }

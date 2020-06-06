@@ -26,6 +26,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".OnboardingActivity"/>
+        <activity android:name=".AppActivity"/>
+        <activity android:name=".CallingActivity"/>
+        <activity android:name=".StepActivity"/>
+        <activity android:name=".SoundActivity"/>
+        <activity android:name=".Register"/>
+
         <service
             android:name=".SensorDataService"
             android:permission="android.permission.BIND_JOB_SERVICE"/>

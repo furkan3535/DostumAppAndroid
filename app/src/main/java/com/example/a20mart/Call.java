@@ -4,6 +4,10 @@ public class Call {
     private int callTime;
     private int callType;
 
+    public Call(){
+        this.callTime = 0;
+        this.callType = 0;
+    }
     public Call(int callTime, int callType) {
         this.callTime = callTime;
         this.callType = callType;

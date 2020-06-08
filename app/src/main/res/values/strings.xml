@@ -5,4 +5,11 @@
     <string name="coordinates">
       %1$.2s %2$.2s %3$.2s
     </string>
+    <string-array name="call_log_arrays">
+        <item>Average Call Time</item>
+        <item>Maximum Call Time</item>
+        <item>Total Call Count</item>
+        <item>Total Called Person</item>
+        <item>Total Call Time</item>
+    </string-array>
 </resources>

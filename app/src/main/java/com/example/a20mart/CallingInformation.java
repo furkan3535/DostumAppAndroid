@@ -3,7 +3,7 @@ package com.example.a20mart;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CallingInfo {
+public class CallingInformation {
 
     private int totalDuration;
     private int totalCallCount;
@@ -12,7 +12,7 @@ public class CallingInfo {
     private int maximumCallTime;
     private List<Caller> callers;
 
-    CallingInfo(){
+    public CallingInformation(){
         totalDuration = 0;
         totalCallCount = 0;
         totalCalledPerson = 0;

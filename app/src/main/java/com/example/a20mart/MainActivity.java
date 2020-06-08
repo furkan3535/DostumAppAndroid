@@ -30,11 +30,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
@@ -51,7 +54,7 @@ import java.util.Vector;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     static final int REQUEST_CODE = 123;
-    Button usageBtn, StartServiceBtn,firestoreAddButton;
+    Button usageBtn, StartServiceBtn,firestoreAddButton,firestoreFetchButton;
     static boolean granted;
     ListView appDataList;
     TextView soundLevelText;
@@ -64,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SensorManager mSensorManager;
     private Sensor mSensorProximity, mSensorLight;
     private Vector _currentAccelerometer;
-    private CallingInfo _callingInfo;
+    private CallingInformation _callingInfo;
     private FirebaseAuth mAuth;
     public static FirebaseUser currentUser;
     public static FirebaseFirestore db;
@@ -84,8 +87,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         my_db=new SQLiteAccessHelper(this);
         usageBtn.setOnClickListener(this);
         firestoreAddButton = findViewById(R.id.firestoreAddButton);
+        firestoreFetchButton = findViewById(R.id.firestoreFetchButton);
         currentUser = mAuth.getCurrentUser();
         firestoreAddButton.setOnClickListener(firestoreAddButtonPressed);
+        firestoreFetchButton.setOnClickListener(firestoreFetchButtonPressed);
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         appDataList = findViewById(R.id.appsList);
         callInfoTextView=findViewById(R.id.callingText);
@@ -136,19 +141,66 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         PackageManager pm = getPackageManager();
     }
+
+
+    View.OnClickListener firestoreFetchButtonPressed = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+
+            DocumentReference docRef = db.collection("CallData").document( "1vOW6mSNcoJSydDH32O5");
+
+            docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                            FBCallData callData = document.toObject(FBCallData.class);
+                            Log.d(TAG, "DocumentSnapshot data: " + callData);
+
+                        } else {
+                            Log.d(TAG, "No such document");
+                        }
+                    } else {
+                        Log.d(TAG, "get failed with ", task.getException());
+                    }
+                }
+            });
+
+
+           /* db.collection("CallData").whereEqualTo("UserId",currentUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Log.d(TAG, document.getId() + " => " + document.getData());
+                        }
+                    } else {
+                        Log.d(TAG, "Error getting documents: ", task.getException());
+                    }
+                }
+            });*/
+
+
+        }
+    };
+
     View.OnClickListener firestoreAddButtonPressed  = new  View.OnClickListener(){
         @Override
         public void onClick(View v) {
             Map<String, Object> user = new HashMap<>();
-            CallingInfo info = getCallDetails();
+            CallingInformation info = getCallDetails();
             user.put("UserId", currentUser.getUid());
             user.put("Date", Calendar.getInstance().getTime());
-            user.put("AverageCallTime", info.getAverageCallTime());
-            user.put("MaximumCallTime", info.getMaximumCallTime());
-            user.put("TotalCallCount", info.getTotalCallCount());
-            user.put("TotalCalledPerson", info.getTotalCalledPerson());
-            user.put("TotalDuration", info.getTotalDuration());
-            user.put("Callers", info.getCallers());
+            user.put("Data",info);
+        /*user.put("AverageCallTime", info.getAverageCallTime());
+        user.put("MaximumCallTime", info.getMaximumCallTime());
+        user.put("TotalCallCount", info.getTotalCallCount());
+        user.put("TotalCalledPerson", info.getTotalCalledPerson());
+        user.put("TotalDuration", info.getTotalDuration());
+        user.put("Callers", info.getCallers());*/
 
 
             db.collection("CallData")
@@ -413,7 +465,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    private CallingInfo getCallDetails() {
+    private CallingInformation getCallDetails() {
         int NumOfPerson=0;
         int Duration=0;
         StringBuffer stringBuffer = new StringBuffer();
@@ -431,7 +483,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
         int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
         int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
-        _callingInfo = new CallingInfo();
+        _callingInfo = new CallingInformation();
         stringBuffer.append("CALL LOG\n\n");
         NumOfPerson=managedCursor.getCount();
         while (managedCursor.moveToNext()) {

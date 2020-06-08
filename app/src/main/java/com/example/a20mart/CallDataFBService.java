@@ -85,7 +85,7 @@ public class CallDataFBService extends JobService {
         int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
         int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
         int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
-        CallingInfo _callingInfo = new CallingInfo();
+        CallingInformation _callingInfo = new CallingInformation();
         stringBuffer.append("CALL LOG\n\n");
         NumOfPerson=managedCursor.getCount();
         while (managedCursor.moveToNext()) {
@@ -155,7 +155,7 @@ public class CallDataFBService extends JobService {
 
     }
 
-    public void sentToFirebase(CallingInfo info){
+    public void sentToFirebase(CallingInformation info){
         Map<String, Object> user = new HashMap<>();
         user.put("UserId", currentUser.getUid());
         user.put("Date", Calendar.getInstance().getTime());

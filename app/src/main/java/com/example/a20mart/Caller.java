@@ -19,6 +19,14 @@ public class Caller {
         this.maximumCallTime = 0;
         this.calls = new ArrayList<Call>();
     }
+    public Caller(){
+        this.callerNumber = "";
+        this.totalDuration = 0;
+        this.totalCallCount = 0;
+        this.averageCallTime = 0;
+        this.maximumCallTime = 0;
+        this.calls = new ArrayList<Call>();
+    }
 
     public void addDuration(int duration,int callType){
         this.totalDuration += duration;

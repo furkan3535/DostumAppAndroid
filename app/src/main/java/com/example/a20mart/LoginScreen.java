@@ -38,6 +38,7 @@ public class LoginScreen extends AppCompatActivity {
     private static final String TAG = "FB Login";
 
     private void intentToMain(){
+       // startActivity(new Intent(this,MainActivity.class));
         startActivity(new Intent(this,OnboardingActivity.class));
     }
     private void intentToRegister(){

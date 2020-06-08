@@ -98,7 +98,7 @@ public class DataTransmitService extends JobService {
         int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
         int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
         int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
-        CallingInfo _callingInfo = new CallingInfo();
+        CallingInformation _callingInfo = new CallingInformation();
         stringBuffer.append("CALL LOG\n\n");
         NumOfPerson=managedCursor.getCount();
         while (managedCursor.moveToNext()) {
@@ -168,16 +168,17 @@ public class DataTransmitService extends JobService {
 
     }
 
-    public void sentToFirebase(CallingInfo info){
+    public void sentToFirebase(CallingInformation info){
         Map<String, Object> user = new HashMap<>();
         user.put("UserId", currentUser.getUid());
         user.put("Date", Calendar.getInstance().getTime());
-        user.put("AverageCallTime", info.getAverageCallTime());
+        user.put("Data",info);
+        /*user.put("AverageCallTime", info.getAverageCallTime());
         user.put("MaximumCallTime", info.getMaximumCallTime());
         user.put("TotalCallCount", info.getTotalCallCount());
         user.put("TotalCalledPerson", info.getTotalCalledPerson());
         user.put("TotalDuration", info.getTotalDuration());
-        user.put("Callers", info.getCallers());
+        user.put("Callers", info.getCallers());*/
         Log.i("FirebaseLog","sentToFirebase Start");
 
         db.collection("CallData")

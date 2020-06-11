@@ -5,11 +5,13 @@ import java.sql.Date;
 public class SensorData {
     public String SensorType;
     public int SensorVal;
-    public String Date;
+    public Long Date;
+    public String DateDef;
 
-    public SensorData(String date,String sensorType, int sensorVal) {
+    public SensorData(Long date,String Date_Def,String sensorType, int sensorVal) {
         SensorType = sensorType;
         SensorVal = sensorVal;
         Date=date;
+        DateDef=Date_Def;
     }
 }

@@ -119,8 +119,22 @@ public class LoginScreen extends AppCompatActivity {
     View.OnClickListener signInWithEmailPressed = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+<<<<<<< HEAD
             //mAuth.signInWithEmailAndPassword(emailET.getText().toString(), passwordET.getText().toString())
             mAuth.signInWithEmailAndPassword("furkan@gmail.com","1234qwer")
+=======
+
+            //ekrem1@gmail.com UID = bKcM1RjC3iaNLnvrjSW8EzS65u12
+
+
+
+
+
+
+
+
+            mAuth.signInWithEmailAndPassword("ekrem1@gmail.com", "123456")
+>>>>>>> FireBase_Data_Send
                     .addOnCompleteListener( new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {

@@ -4,7 +4,12 @@ buildscript {
     repositories {
         google()
         jcenter()
+<<<<<<< HEAD
 
+=======
+        maven { url 'https://www.jitpack.io' }
+        
+>>>>>>> FireBase_Data_Send
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.6.3'

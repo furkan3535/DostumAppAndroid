@@ -32,6 +32,9 @@
         <activity android:name=".StepActivity"/>
         <activity android:name=".SoundActivity"/>
         <activity android:name=".Register"/>
+        <activity android:name=".Pedometer">
+        </activity>
+        <activity android:name=".DataRepresentation"></activity>
 
         <service
             android:name=".SensorDataService"

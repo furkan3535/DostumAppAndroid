@@ -18,13 +18,12 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Vector;
 
 public class SensorDataService extends Service implements SensorEventListener,StepListener {
     private static final String TAG="Background Service";
@@ -45,7 +44,7 @@ public class SensorDataService extends Service implements SensorEventListener,St
     private NotificationManagerCompat notificationManagerCompat;
     private JobScheduler jobScheduler;
     private boolean jobFlag=false;
-
+    private Date time;
 
     @Override
     public void onCreate() { //it calls first time startService is run on main.
@@ -95,7 +94,7 @@ public class SensorDataService extends Service implements SensorEventListener,St
                     for (int i = 0; i < 6; i++) {
                         if (i != 0) {
                             try {
-                                Thread.sleep(2000);
+                                Thread.sleep(5000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -110,19 +109,19 @@ public class SensorDataService extends Service implements SensorEventListener,St
 
                     mRecorderSound.stop();
                     mRecorderSound.reset();
-
+                time=Calendar.getInstance().getTime();
                     //Data insertion to SQLite DB
-                    my_db.insertDataSQL( Calendar.getInstance().getTime().toString(),Sound_Key,RecordVal);
-                    my_db.insertDataSQL(Calendar.getInstance().getTime().toString(),Step_Key,(int)numSteps);
-                    if(my_db.getCount()>=2 && !jobFlag){
-                        SendData();
-                        jobFlag=true;
-                    }
+                my_db.insertDataSQL( time.getTime(),time.toString(),Sound_Key,RecordVal);
+                my_db.insertDataSQL( time.getTime(),time.toString(),Step_Key,(int)numSteps);
+                if(my_db.getCount()>=4 && !jobFlag){
+                    SendData();
+                    jobFlag=true;
+                }
 
                     Log.d(TAG, "All Data is saved into SQL : " + RecordVal + "Step  "+(int)numSteps);
             }
 
-        },0, 6*60*1000); // 10min
+        },0, 5*60*1000); // 10min
 
 
 

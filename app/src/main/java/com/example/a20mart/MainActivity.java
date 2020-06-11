@@ -54,7 +54,7 @@ import java.util.Vector;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     static final int REQUEST_CODE = 123;
-    Button usageBtn, StartServiceBtn,firestoreAddButton,firestoreFetchButton;
+    Button usageBtn, StartServiceBtn,firestoreAddButton,firestoreFetchButton,graphBtn,stepBtn;;
     static boolean granted;
     ListView appDataList;
     TextView soundLevelText;
@@ -98,7 +98,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //App Usage Permission Check
         Calendar alarmCalendar=Calendar.getInstance();
         usageBtn.setOnClickListener(applicationUsageClicked);
-
+        graphBtn=findViewById(R.id.graphBtn);
+        graphBtn.setOnClickListener(this);
+        stepBtn=findViewById(R.id.StepBtn);
+        stepBtn.setOnClickListener(this);
 
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
         int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
@@ -436,12 +439,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Button btn = (Button) v;
 
-        if (btn == usageBtn) {
-
-
+        if(btn==graphBtn){
+            startActivity(new Intent(this,DataRepresentation.class));
 
         }
+        if(btn==stepBtn){
+            startActivity(new Intent(this,Pedometer.class));
 
+        }
 
     }
 

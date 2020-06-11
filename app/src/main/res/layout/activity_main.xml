@@ -24,6 +24,17 @@
 
             </ListView>
             <Button
+                android:id="@+id/graphBtn"
+                android:layout_width="125dp"
+                android:layout_height="wrap_content"
+                android:text="ShowChart" />
+
+            <Button
+                android:id="@+id/StepBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="BarChart" />
+            <Button
                 android:id="@+id/firestoreAddButton"
                 android:layout_width="375dp"
                 android:layout_height="40dp"

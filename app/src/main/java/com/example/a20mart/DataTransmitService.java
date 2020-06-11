@@ -16,6 +16,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import java.util.Map;
 public class DataTransmitService extends JobService {
     private FirebaseAuth mAuth;
     public static FirebaseUser currentUser;
+    private ArrayList<SensorData> tempData;
     public static FirebaseFirestore db;
     private SQLiteAccessHelper my_db;
     private static final String TAG="DataTransmitService";
@@ -36,6 +38,7 @@ public class DataTransmitService extends JobService {
         db = FirebaseFirestore.getInstance();
         currentUser = mAuth.getCurrentUser();
         my_db=new SQLiteAccessHelper(this);
+        tempData=new ArrayList<>();
 
     }
 
@@ -48,31 +51,30 @@ public class DataTransmitService extends JobService {
     }
 
     private void TransmitSensorDataToFireBase(JobParameters params){
-        Log.i(TAG, "TransmitSensorDataToFireBase: is started");
-        Map<String, Object> SensorData;
-        for(int i=0;i<Sensor_Keys.length;i++) {
-            SensorData = new HashMap<>();
-            SensorData.put("UserId", currentUser.getUid());
-            SensorData.put("Date", Calendar.getInstance().getTime());
-            SensorData.put("Record_Def", Sensor_Keys[i]);
-            SensorData.put("Record_Val",my_db.getLastData(this,Sensor_Keys[i]) );
+        Map<String,Object> Data;
+        ArrayList<SensorData>tempDb=new ArrayList<>();
+        for (int i = 0; i <Sensor_Keys.length; i++) {
+            tempData.add(my_db.getDataList(this, Sensor_Keys[i]).get(0));
 
-            Log.i(TAG, "SensorData Type: "+SensorData.get("Record_Def")+" Value :"+SensorData.get("Record_Val"));
-            db.collection("SensorData")
-                    .add(SensorData)
-                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                        @Override
-                        public void onSuccess(DocumentReference documentReference) {
-                            Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.w(TAG, "Error adding document", e);
-                        }
-                    });
         }
+        for(int i=0;i<Sensor_Keys.length;i++) {
+            tempDb=my_db.getDataList(this, Sensor_Keys[i]);
+            for (int j = 1; j <tempDb.size() ; j++) {
+                Data = new HashMap<>();
+                Data.put("UserId",currentUser.getUid());
+                Data.put("Val",tempDb.get(j).SensorVal);
+                Data.put("TimeLong",tempDb.get(j).Date);
+                Data.put("Time",tempDb.get(j).DateDef);
+                db.collection(Sensor_Keys[i]).add(Data);
+
+            }
+
+        }
+        //SQLite CLEAR
+        my_db.clear();
+        my_db.insertDataSQL(tempData.get(0).Date,tempData.get(1).DateDef,tempData.get(1).SensorType,tempData.get(1).SensorVal);
+        my_db.insertDataSQL(tempData.get(0).Date,tempData.get(0).DateDef,tempData.get(0).SensorType,tempData.get(0).SensorVal);
+        tempData.clear();
 
     }
 

@@ -1,6 +1,7 @@
 package com.example.a20mart;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,6 +15,7 @@ import androidx.core.content.ContextCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -33,10 +35,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-enum CallType{
-    AverageCallTime,MaximumCallTime,TotalCallCount,TotalCalledPerson,TotalCallTime
-}
+
 public class CallingActivity extends Activity {
+    enum CallType{
+        AverageCallTime,MaximumCallTime,TotalCallCount,TotalCalledPerson,TotalCallTime
+    }
     public static final String TAG = "CallingActivity";
     private FirebaseAuth mAuth;
     public static FirebaseUser currentUser;
@@ -60,6 +63,8 @@ public class CallingActivity extends Activity {
         db = FirebaseFirestore.getInstance();
         currentUser = mAuth.getCurrentUser();
         chart =  findViewById(R.id.chart);
+        chart.setNoDataText("Loading...");
+        chart.getLegend().setEnabled(false);
         spinner = findViewById(R.id.spinner);
         drawable = ContextCompat.getDrawable(this,R.drawable.line_gradient);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -137,12 +142,12 @@ public class CallingActivity extends Activity {
                             chart.setDragEnabled(true);
                             chart.setExtraOffsets(10,10,10,10);
                             Collections.sort(entries, new EntryXComparator());
-                            LineDataSet dataSet = new LineDataSet(entries,"Average Call Time");
+                            LineDataSet dataSet = new LineDataSet(entries,callType.toString());
                             dataSet.setDrawValues(false);
                             LineData LineData = new LineData(dataSet);
                             chart.setData(LineData);
                             chart.getXAxis().setValueFormatter(new IAxisValueFormatter() {
-                                private SimpleDateFormat mFormat = new SimpleDateFormat("HH");
+                                private SimpleDateFormat mFormat = new SimpleDateFormat("dd/MM");
 
                                 @Override
                                 public String getFormattedValue(float value, AxisBase axis) {
@@ -161,10 +166,14 @@ public class CallingActivity extends Activity {
                             dataSet.setDrawFilled(true);
                             dataSet.setFillDrawable(drawable);
                             dataSet.setDrawCircles(false);
-
+                            dataSet.setColor(Color.parseColor("#F38034"));
                             chart.getAxisRight().setDrawGridLines(false);
                             chart.getAxisLeft().setDrawGridLines(false);
                             chart.getXAxis().setDrawGridLines(false);
+                            chart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
+                            chart.getAxisRight().setDrawAxisLine(false);
+                            chart.getAxisRight().setEnabled(false);
+                            chart.setDescription(null);
                             chart.invalidate();
 
 

@@ -33,6 +33,18 @@
                 android:text="Button" />
 
             <Button
+                android:id="@+id/graphBtn"
+                android:layout_width="125dp"
+                android:layout_height="wrap_content"
+                android:text="ShowChart" />
+
+            <Button
+                android:id="@+id/StepBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="BarChart" />
+
+            <Button
                 android:id="@+id/StartBackgroundService"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

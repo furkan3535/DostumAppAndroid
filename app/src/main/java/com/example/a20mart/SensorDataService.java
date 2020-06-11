@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -45,6 +46,7 @@ public class SensorDataService extends Service implements SensorEventListener,St
     private NotificationManagerCompat notificationManagerCompat;
     private JobScheduler jobScheduler;
     private boolean jobFlag=false;
+    private Date time;
 
 
     @Override
@@ -95,7 +97,7 @@ public class SensorDataService extends Service implements SensorEventListener,St
                     for (int i = 0; i < 6; i++) {
                         if (i != 0) {
                             try {
-                                Thread.sleep(2000);
+                                Thread.sleep(5000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -110,11 +112,11 @@ public class SensorDataService extends Service implements SensorEventListener,St
 
                     mRecorderSound.stop();
                     mRecorderSound.reset();
-
+                    time=Calendar.getInstance().getTime();
                     //Data insertion to SQLite DB
-                    my_db.insertDataSQL( Calendar.getInstance().getTime().toString(),Sound_Key,RecordVal);
-                    my_db.insertDataSQL(Calendar.getInstance().getTime().toString(),Step_Key,(int)numSteps);
-                    if(my_db.getCount()>=2 && !jobFlag){
+                    my_db.insertDataSQL( time.getTime(),time.toString(),Sound_Key,RecordVal);
+                    my_db.insertDataSQL( time.getTime(),time.toString(),Step_Key,(int)numSteps);
+                    if(my_db.getCount()>=4 && !jobFlag){
                         SendData();
                         jobFlag=true;
                     }
@@ -122,7 +124,7 @@ public class SensorDataService extends Service implements SensorEventListener,St
                     Log.d(TAG, "All Data is saved into SQL : " + RecordVal + "Step  "+(int)numSteps);
             }
 
-        },0, 6*60*1000); // 10min
+        },0, 3*60*1000); // 10min
 
 
 
@@ -191,7 +193,7 @@ public class SensorDataService extends Service implements SensorEventListener,St
         ComponentName componentName=new ComponentName(this,DataTransmitService.class);
         JobInfo jobInfo=new JobInfo.Builder(321,componentName)
                 .setPersisted(true) //job will be written to disk and loaded at boot.
-                .setPeriodic(15*60*1000) //Periodicity
+                .setPeriodic(30*60*1000) //Periodicity
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY) //Requires Any Network To Run.
                 .build();
 

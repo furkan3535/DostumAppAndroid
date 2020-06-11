@@ -50,7 +50,7 @@ import java.util.Vector;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     static final int REQUEST_CODE = 123;
-    Button usageBtn, StartServiceBtn;
+    Button usageBtn, StartServiceBtn,graphBtn,stepBtn;
     static boolean granted;
     ListView appDataList;
     TextView soundLevelText;
@@ -82,7 +82,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         usageBtn = findViewById(R.id.usageBtn);
         my_db=new SQLiteAccessHelper(this);
         usageBtn.setOnClickListener(this);
-
+        graphBtn=findViewById(R.id.graphBtn);
+        graphBtn.setOnClickListener(this);
+        stepBtn=findViewById(R.id.StepBtn);
+        stepBtn.setOnClickListener(this);
 
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         appDataList = findViewById(R.id.appsList);
@@ -323,7 +326,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         }
 
+        if(btn==graphBtn){
+            startActivity(new Intent(this,DataRepresentation.class));
 
+        }
+        if(btn==stepBtn){
+            startActivity(new Intent(this,Pedometer.class));
+
+        }
     }
 
 

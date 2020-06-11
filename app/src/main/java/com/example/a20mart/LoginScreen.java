@@ -71,9 +71,7 @@ public class LoginScreen extends AppCompatActivity {
         public void onClick(View v) {
 
             //ekrem1@gmail.com UID = bKcM1RjC3iaNLnvrjSW8EzS65u12
-            Map<String,String> loginVal=new HashMap<>();
-            loginVal.put("User Id",currentUser.getUid());
-            db.collection("NewUsers").document("Ekrem").set(loginVal);
+
 
 
 

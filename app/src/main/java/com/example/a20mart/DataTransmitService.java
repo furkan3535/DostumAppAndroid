@@ -37,6 +37,10 @@ public class DataTransmitService extends JobService {
     public static FirebaseUser currentUser;
     private ArrayList<SensorData> tempData;
     public static FirebaseFirestore db;
+
+
+
+    
     private SQLiteAccessHelper my_db;
     private static final String TAG="DataTransmitService";
     private String Sensor_Keys[]={SensorDataService.Step_Key,SensorDataService.Sound_Key}; //HARD CODING

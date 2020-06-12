@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 
-public class DataRepresentation extends AppCompatActivity implements View.OnClickListener{
+public class SoundRecords extends AppCompatActivity implements View.OnClickListener{
     LineChart lineChart;
     Button dailyBtn,weeklyBtn;
     FBSensorData Data;
@@ -63,7 +63,7 @@ public class DataRepresentation extends AppCompatActivity implements View.OnClic
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_data_representation);
+        setContentView(R.layout.activity_sound);
         //monitorBtn=findViewById(R.id.monitorData);
        // monitorBtn.setOnClickListener(this);
         lineChart=findViewById(R.id.LineChart);
@@ -332,16 +332,16 @@ public class DataRepresentation extends AppCompatActivity implements View.OnClic
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if(documentSnapshot.exists()){
-                    Toast.makeText(DataRepresentation.this, "Doc is exist", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SoundRecords.this, "Doc is exist", Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    Toast.makeText(DataRepresentation.this, "Doc is not exist", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SoundRecords.this, "Doc is not exist", Toast.LENGTH_SHORT).show();
                 }
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Toast.makeText(DataRepresentation.this, "ERRRRRROOOOOOOOORRRRRRRRRRRRRRR!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SoundRecords.this, "ERRRRRROOOOOOOOORRRRRRRRRRRRRRR!", Toast.LENGTH_SHORT).show();
             }
         });
 

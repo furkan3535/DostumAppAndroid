@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
 public class OnboardingActivity extends Activity {
     private LinearLayout stepLL,soundLL,callLL,appLL;
@@ -20,18 +21,19 @@ public class OnboardingActivity extends Activity {
         soundLL = findViewById(R.id.soundLL);
         callLL = findViewById(R.id.callLL);
         appLL = findViewById(R.id.appLL);
+        StartService();
 
         stepLL.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                intentTClass(StepActivity.class);
+                intentTClass(Pedometer.class);
 
             }
         });
         soundLL.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                intentTClass(SoundActivity.class);
+                intentTClass(SoundRecords.class);
 
             }
         });
@@ -58,4 +60,22 @@ public class OnboardingActivity extends Activity {
     private void intentTClass(Class<?> cls){
         startActivity(new Intent(this,cls));
     }
+
+
+
+
+
+
+    public void StartService() {
+        Intent serviceIntent = new Intent(this, SensorDataService.class);
+        ContextCompat.startForegroundService(this, serviceIntent);
+
+    }
+
+    /*public void StopService(View view) {
+        Intent serviceIntent=new Intent(this,SensorDataService.class);
+        stopService(serviceIntent);
+        finish();
+
+    }*/
 }

@@ -2,9 +2,16 @@ package com.example.a20mart;
 
 import android.app.job.JobParameters;
 import android.app.job.JobService;
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.provider.CallLog;
+import android.provider.Settings;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -18,8 +25,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DataTransmitService extends JobService {
@@ -30,6 +40,8 @@ public class DataTransmitService extends JobService {
     private SQLiteAccessHelper my_db;
     private static final String TAG="DataTransmitService";
     private String Sensor_Keys[]={SensorDataService.Step_Key,SensorDataService.Sound_Key}; //HARD CODING
+    private UsageStatsManager usageStatsManager;
+
     @Override
     public void onCreate() {
         Log.i(TAG, "onCreate: ");
@@ -39,16 +51,123 @@ public class DataTransmitService extends JobService {
         currentUser = mAuth.getCurrentUser();
         my_db=new SQLiteAccessHelper(this);
         tempData=new ArrayList<>();
+       usageStatsManager=(UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
 
     }
+
+
+
+
 
     @Override
     public boolean onStartJob(JobParameters params) {
         Log.i(TAG, "onStartJob: is started");
         TransmitSensorDataToFireBase(params);
+        sendAppToFB();
         getCallDetails();
         return false;
     }
+
+    public List<ApplicationDetail> getApplicationUsage(){
+        ArrayList<ApplicationDetail> applicationDetailList = new ArrayList<>();
+            boolean contains = false; // en tepeye aliriz sonra
+            ApplicationDetail d1;
+            Toast.makeText(getApplicationContext(), "Usage Permission Already Granted", Toast.LENGTH_SHORT).show();
+            //show statistics
+            final long currentTime = System.currentTimeMillis(); // Get current time in milliseconds
+
+            final Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DAY_OF_YEAR, -1);//Set year to beginning of desired period.
+            final long beginTime = cal.getTimeInMillis();//Get begin time in milliseconds
+
+            final List<UsageStats> queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, beginTime, currentTime);
+
+            for (UsageStats u : queryUsageStats) {
+                contains = false;
+                if (getAppNameFromPackage(u.getPackageName(), this) != null) {
+                    // if true this is an application that is downloaded from appstore etc.
+                    d1 = new ApplicationDetail(u.getPackageName(), u.getTotalTimeInForeground());
+                    if (applicationDetailList.size() < 1) {
+                        applicationDetailList.add(d1);
+                        contains = true;
+                    } else {
+                        for (int i = 0; i < applicationDetailList.size(); i++) {
+                            if (applicationDetailList.get(i).getApplicationName().equals(d1.getApplicationName())) {
+                                applicationDetailList.get(i).setApplicationUsageTime(d1.getApplicationUsageTime());
+                                contains = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!contains) {
+                        applicationDetailList.add(d1);
+
+                    }
+                }
+
+            }
+            Collections.sort(applicationDetailList, new Comparator<ApplicationDetail>() {
+                @Override
+                public int compare(ApplicationDetail o1, ApplicationDetail o2) {
+                    return (int) (o2.getHour() - o1.getHour());
+                }
+            });
+
+
+
+
+        return  applicationDetailList;
+    }
+
+
+
+    private void sendAppToFB(){
+
+        List<ApplicationDetail> appList = getApplicationUsage();
+        Map<String, Object> user = new HashMap<>();
+        user.put("UserId", currentUser.getUid());
+        user.put("Date", Calendar.getInstance().getTime());
+        user.put("AppList", appList);
+
+
+        db.collection("ApplicationUsage")
+                .add(user)
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                    @Override
+                    public void onSuccess(DocumentReference documentReference) {
+                        Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "Error adding document", e);
+                    }
+                });
+
+    }
+
+
+
+
+
+
+    private String getAppNameFromPackage(String packageName, Context context) {
+        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+        List<ResolveInfo> pkgAppsList = context.getPackageManager()
+                .queryIntentActivities(mainIntent, 0);
+
+
+        for (ResolveInfo app : pkgAppsList) {
+            if (app.activityInfo.packageName.equals(packageName)) {
+                return app.activityInfo.loadLabel(context.getPackageManager()).toString();
+            }
+        }
+        return null;
+    }
+
 
     private void TransmitSensorDataToFireBase(JobParameters params){
         Map<String,Object> Data;

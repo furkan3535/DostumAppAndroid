@@ -34,7 +34,7 @@
         <activity android:name=".Register"/>
         <activity android:name=".Pedometer">
         </activity>
-        <activity android:name=".DataRepresentation"></activity>
+        <activity android:name=".SoundRecords"></activity>
 
         <service
             android:name=".SensorDataService"

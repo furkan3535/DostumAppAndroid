@@ -1,37 +1,74 @@
 package com.example.a20mart;
 
+import com.google.firebase.database.PropertyName;
+
 public class ApplicationDetail {
-    private String ApplicationName;
-    private long ApplicationUsageTime;
 
-    public String getApplicationName() {
-        return ApplicationName;
-    }
+    @PropertyName("applicationName")
+    private String applicationName;
 
-    public void setApplicationUsageTime(long applicationUsageTime) {
-        ApplicationUsageTime += applicationUsageTime;
+    @PropertyName("applicationUsageTime")
+    private long applicationUsageTime;
+
+    @PropertyName("day")
+    private long day;
+
+    @PropertyName("hour")
+    private long hour;
+
+    @PropertyName("year")
+    private long year;
+
+
+    public void setApplicationUsageTime(long _applicationUsageTime) {
+        applicationUsageTime += _applicationUsageTime;
     }
 
     public long getApplicationUsageTime() {
-        return ApplicationUsageTime;
+        return applicationUsageTime;
     }
 
-    public ApplicationDetail(String appName, long timeMs){
-        this.ApplicationName=appName;
-        this.ApplicationUsageTime=timeMs;
-
+    public void setApplicationName(String applicationName) {
+        this.applicationName = applicationName;
     }
 
-
-    public float getHour(){
-        return this.ApplicationUsageTime/3600000;
+    public long getDay() {
+        return day;
     }
 
-    public float getDay(){
-        return this.ApplicationUsageTime/(3600000*24);
+    public void setDay(long day) {
+        this.day = day;
     }
-    public float getYear(){
-        return this.ApplicationUsageTime/(3600000*24*365);
+
+    public long getHour() {
+        return hour;
+    }
+
+    public void setHour(long hour) {
+        this.hour = hour;
+    }
+
+    public long getYear() {
+        return year;
+    }
+
+    public void setYear(long year) {
+        this.year = year;
+    }
+
+    public ApplicationDetail() {
+    }
+
+    public ApplicationDetail(String applicationName, long applicationUsageTime) {
+        this.applicationName = applicationName;
+        this.applicationUsageTime = applicationUsageTime;
+        this.day = 0;
+        this.hour = 0;
+        this.year = 0;
+    }
+
+    public String getApplicationName() {
+        return applicationName;
     }
 
 

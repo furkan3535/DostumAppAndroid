@@ -38,8 +38,8 @@ public class LoginScreen extends AppCompatActivity {
     private static final String TAG = "FB Login";
 
     private void intentToMain(){
-        startActivity(new Intent(this,MainActivity.class));
-        //startActivity(new Intent(this,OnboardingActivity.class));
+        //startActivity(new Intent(this,MainActivity.class));
+        startActivity(new Intent(this,OnboardingActivity.class));
     }
     private void intentToRegister(){
         startActivity(new Intent(this,Register.class));
@@ -120,8 +120,8 @@ public class LoginScreen extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             //mAuth.signInWithEmailAndPassword(emailET.getText().toString(), passwordET.getText().toString())
-            //mAuth.signInWithEmailAndPassword("furkan@gmail.com","1234qwer")
-            mAuth.signInWithEmailAndPassword("ekrem1@gmail.com","123456")
+            mAuth.signInWithEmailAndPassword("furkan@gmail.com","1234qwer")
+           // mAuth.signInWithEmailAndPassword("ekrem1@gmail.com","123456")
                     .addOnCompleteListener( new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {

@@ -411,7 +411,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Collections.sort(applicationDetailList, new Comparator<ApplicationDetail>() {
                 @Override
                 public int compare(ApplicationDetail o1, ApplicationDetail o2) {
-                    return (int) (o2.getHour() - o1.getHour());
+                    return (int) (o2.getApplicationUsageTime()/(1000*60) - o1.getApplicationUsageTime()/(1000*60));
                 }
             });
 /*

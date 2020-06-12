@@ -18,6 +18,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     static final int REQUEST_CODE = 123;
     static boolean granted;
+    AppOpsManager appOps;
+    int mode;
 
 
     @Override
@@ -27,8 +29,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         //App Permissions //
-        AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
-        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+         appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+        mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
                 Process.myUid(), getPackageName());
 
         if (mode == AppOpsManager.MODE_DEFAULT) {
@@ -54,14 +56,19 @@ public class MainActivity extends AppCompatActivity {
 
 
         }else if(!granted){
+            Intent intent=new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             Toast.makeText(getApplicationContext(),
-                  "Please allow data usage to see related data.", Toast.LENGTH_LONG).show();
-            startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+                    "Please allow data usage to see related data.", Toast.LENGTH_LONG).show();
+            startActivity(intent);
+            finish(); // Call once you redirect to another activity
+
+
 
         }
         else {
             //after all permissions are granted. This condition direct to app on boarding.
-            startActivity(new Intent(this, OnboardingActivity.class));
+            startActivity(new Intent(this, OnboardingActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
         }
 
     }
@@ -70,10 +77,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String[] permissions, int[] grantResults) {
+
+        if (mode == AppOpsManager.MODE_DEFAULT) {
+            granted = (checkCallingOrSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED);
+        } else {
+            granted = (mode == AppOpsManager.MODE_ALLOWED);
+        }
+
         if(!granted){
+            Intent intent=new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             Toast.makeText(getApplicationContext(),
                     "Please allow data usage to see related data.", Toast.LENGTH_LONG).show();
-            startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+            startActivity(intent);
+
+            finish(); // Call once you redirect to another activity
+
 
         }
         switch (requestCode) {
@@ -82,6 +101,9 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED
                         && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    if(granted){
+                        startActivity(new Intent(this, OnboardingActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                    }
                     // all permission was granted, yay! Do the
                     // contacts-related task you need to do.
                     //
@@ -125,6 +147,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         }
+
+
     }
 
 

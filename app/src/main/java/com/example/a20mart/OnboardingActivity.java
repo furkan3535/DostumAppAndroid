@@ -1,13 +1,17 @@
 package com.example.a20mart;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 public class OnboardingActivity extends Activity {
@@ -21,7 +25,7 @@ public class OnboardingActivity extends Activity {
         soundLL = findViewById(R.id.soundLL);
         callLL = findViewById(R.id.callLL);
         appLL = findViewById(R.id.appLL);
-        StartService();
+        //StartService();
 
         stepLL.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -51,6 +55,24 @@ public class OnboardingActivity extends Activity {
 
             }
         });
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setTitle("DOSTUM BİLGİLERİNİZİ PAYLAŞMAZ.");
+        builder.setMessage("Unutmayınız uygulama arka planda çalışmaktadır. İleti bölümünden takip edebilirsiniz. Hiç bir özel bilginiz paylaşılmayacaktır.");
+        builder.setPositiveButton("", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+
+
+
+            }
+        }).setIcon(R.drawable.shield_icon);
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
+
 
 
 
